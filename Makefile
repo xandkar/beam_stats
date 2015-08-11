@@ -15,7 +15,8 @@ REBAR := ./rebar --config rebar_test_build.config
 all: \
 	clean_all \
 	deps_get \
-	compile_all
+	compile_all \
+	dialyze
 
 deps_get:
 	@$(REBAR) get-deps
