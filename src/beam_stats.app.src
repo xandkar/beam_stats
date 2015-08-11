@@ -1,0 +1,31 @@
+{application, beam_stats,
+ [
+  {description, "Periodic VM stats production and consumption."},
+  {vsn, "0.0.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+
+  {mod, { beam_stats_app, []}},
+
+  {env,
+    [ {production_interval , 30000}
+    , {consumers,
+        [ {beam_stats_consumer_graphite,
+            [ {consumption_interval , 60000}
+            , {connect_options,
+                [ {host    , "localhost"}
+                , {port    , 2003}
+                , {timeout , 5000}
+                ]}
+            ]}
+        , {beam_stats_consumer_csv,
+            [ {consumption_interval , 60000}
+            , {path                 , "beam_stats.csv"}
+            ]}
+        ]}
+    ]}
+
+ ]}.
