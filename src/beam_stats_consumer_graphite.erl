@@ -28,7 +28,7 @@
 
 -record(state,
     { connect_options = []   :: [connect_option()]
-    , sock            = none :: hope_option:t(gen_tcp:socket())
+    , sock            = none :: hope_option:t(Socket :: port())
     }).
 
 -type state() ::

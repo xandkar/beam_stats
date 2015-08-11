@@ -144,12 +144,12 @@ beam_stats_to_bins(#beam_stats
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
 
--spec memory_to_msgs(erlang:memory()) ->
+-spec memory_to_msgs([{atom(), non_neg_integer()}]) ->
     [statsd_msg()].
 memory_to_msgs(Memory) ->
     [memory_component_to_statsd_msg(MC) || MC <- Memory].
 
--spec memory_component_to_statsd_msg({erlang:memory_type(), non_neg_integer()}) ->
+-spec memory_component_to_statsd_msg({atom(), non_neg_integer()}) ->
     statsd_msg().
 memory_component_to_statsd_msg({MemType, MemSize}) when MemSize >= 0 ->
     #statsd_msg
