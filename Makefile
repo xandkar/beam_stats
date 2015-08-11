@@ -10,13 +10,15 @@ REBAR := ./rebar --config rebar_test_build.config
 	deps_get \
 	deps_update \
 	dialyze \
-	dialyzer_blt_build
+	dialyzer_blt_build \
+	test
 
 all: \
 	clean_all \
 	deps_get \
 	compile_all \
-	dialyze
+	dialyze \
+	test
 
 deps_get:
 	@$(REBAR) get-deps
@@ -51,3 +53,6 @@ dialyzer_blt_build:
 			| grep -v interface \
 			| sed -e 's/-[0-9.]*//' \
 		)
+
+test:
+	@rebar ct skip_deps=true

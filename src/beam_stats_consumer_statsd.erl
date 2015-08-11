@@ -8,10 +8,20 @@
     [ option/0
     ]).
 
+%% Consumer interface
 -export(
     [ init/1
     , consume/2
     , terminate/1
+    ]).
+
+%% Tests (to be run by CT):
+-export(
+    [ ct_test__beam_stats_to_bins/1
+    , ct_test__memory_component_to_statsd_msg/1
+    , ct_test__statsd_msg_add_name_prefix/1
+    , ct_test__statsd_msg_to_bin/1
+    , ct_test__node_id_to_bin/1
     ]).
 
 -type option() ::
@@ -194,3 +204,28 @@ metric_type_to_bin(gauge) ->
 node_id_to_bin(NodeID) ->
     NodeIDBin = atom_to_binary(NodeID, utf8),
     re:replace(NodeIDBin, "[\@\.]", "_", [global, {return, binary}]).
+
+%% ============================================================================
+%% Tests
+%% ============================================================================
+
+ct_test__beam_stats_to_bins(_Cfg) ->
+    BEAMStats = #beam_stats{node_id = 'node@host.local', memory = [{foo,1}]},
+    [<<?PATH_PREFIX, ".node_host_local.foo:1|g\n">>] =
+        beam_stats_to_bins(BEAMStats).
+
+ct_test__memory_component_to_statsd_msg(_Cfg) ->
+    #statsd_msg{name = <<"foo">>, value = 1, type = gauge} =
+        memory_component_to_statsd_msg({foo, 1}).
+
+ct_test__statsd_msg_add_name_prefix(_Cfg) ->
+    Msg1 = #statsd_msg{name = <<"foo">>, value = 1, type = gauge},
+    Msg2 = statsd_msg_add_name_prefix(Msg1, <<"bar">>),
+    <<?PATH_PREFIX,".bar.foo">> = Msg2#statsd_msg.name.
+
+ct_test__statsd_msg_to_bin(_Cfg) ->
+    Msg = #statsd_msg{name = <<"foo">>, value = 1, type = gauge},
+    <<"foo:1|g\n">> = statsd_msg_to_bin(Msg).
+
+ct_test__node_id_to_bin(_Cfg) ->
+    <<"foo_bar_local">> = node_id_to_bin('foo@bar.local').
