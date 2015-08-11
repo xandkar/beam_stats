@@ -16,7 +16,7 @@
 
 -type option() ::
       {path                 , file:filename()}
-    | {consumption_interval , erlang:time()}
+    | {consumption_interval , non_neg_integer()}
     .
 
 -record(state,
@@ -28,7 +28,7 @@
     #state{}.
 
 -spec init([option()]) ->
-    {erlang:time(), state()}.
+    {non_neg_integer(), state()}.
 init(Options) ->
     ConsumptionInterval = hope_kv_list:get(Options, consumption_interval, 60000),
     {some, Path} = hope_kv_list:get(Options, path),

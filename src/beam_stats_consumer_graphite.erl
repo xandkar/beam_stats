@@ -23,7 +23,7 @@
 
 -type option() ::
       {connect_options      , [connect_option()]}
-    | {consumption_interval , erlang:time()}
+    | {consumption_interval , non_neg_integer()}
     .
 
 -record(state,
@@ -37,7 +37,7 @@
 -define(GRAPHITE_PATH_PREFIX, "beam_stats").
 
 -spec init([option()]) ->
-    {erlang:time(), state()}.
+    {non_neg_integer(), state()}.
 init(Options) ->
     ConnectOptions      = hope_kv_list:get(Options, connect_options     , []),
     ConsumptionInterval = hope_kv_list:get(Options, consumption_interval, 60000),

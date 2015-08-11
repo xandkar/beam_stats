@@ -25,7 +25,7 @@
     ]).
 
 -type option() ::
-      {consumption_interval , erlang:time()}
+      {consumption_interval , non_neg_integer()}
     | {dst_host             , inet:ip_address() | inet:hostname()}
     | {dst_port             , inet:port_number()}
     | {src_port             , inet:port_number()}
@@ -65,7 +65,7 @@
 %% ============================================================================
 
 -spec init([option()]) ->
-    {erlang:time(), state()}.
+    {non_neg_integer(), state()}.
 init(Options) ->
     ConsumptionInterval = hope_kv_list:get(Options, consumption_interval, 60000),
     DstHost = hope_kv_list:get(Options, dst_host, ?DEFAULT_DST_HOST),

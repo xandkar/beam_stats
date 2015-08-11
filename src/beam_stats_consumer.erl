@@ -37,7 +37,7 @@
 %% ============================================================================
 
 -callback init(Options :: term()) ->
-    {ConsumptionInterval :: erlang:time(), State :: term()}.
+    {ConsumptionInterval :: non_neg_integer(), State :: term()}.
 
 -callback consume(queue(), State) ->
     State.
@@ -54,7 +54,7 @@
 -record(state,
     { consumer_module      :: atom()
     , consumer_state       :: term()
-    , consumption_interval :: erlang:time()
+    , consumption_interval :: non_neg_integer()
     , beam_stats_queue     :: queue()
     }).
 
@@ -136,7 +136,7 @@ schedule_first_consumption() ->
     _ = self() ! ?SIGNAL_CONSUMPTION,
     ok.
 
--spec schedule_next_consumption(erlang:time()) ->
+-spec schedule_next_consumption(non_neg_integer()) ->
     ok.
 schedule_next_consumption(Time) ->
     _ = erlang:send_after(Time, self(), ?SIGNAL_CONSUMPTION),

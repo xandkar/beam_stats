@@ -12,7 +12,7 @@
 %% ============================================================================
 
 -spec production_interval() ->
-    erlang:time().
+    non_neg_integer().
 production_interval() ->
     get_env(production_interval).
 
