@@ -26,6 +26,12 @@
             [ {consumption_interval , 60000}
             , {path                 , "beam_stats.csv"}
             ]}
+        , {beam_stats_consumer_statsd,
+            [ {consumption_interval , 60000}
+            , {dst_host             , "localhost"}
+            , {dst_port             , 8125}
+            , {src_port             , 8124}
+            ]}
         ]}
     ]}
 
