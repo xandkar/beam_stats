@@ -3,10 +3,10 @@
   {description, "Periodic VM stats production and consumption."},
   {vsn, "0.0.0"},
   {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
+  {applications,
+    [ kernel
+    , stdlib
+    ]},
 
   {mod, { beam_stats_app, []}},
 
