@@ -22,8 +22,8 @@
     .
 
 -type option() ::
-      {connect_options      , [connect_option()]}
-    | {consumption_interval , non_neg_integer()}
+      {consumption_interval , non_neg_integer()}
+    | {connect_options      , [connect_option()]}
     .
 
 -record(state,

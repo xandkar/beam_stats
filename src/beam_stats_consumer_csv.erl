@@ -15,8 +15,8 @@
     ]).
 
 -type option() ::
-      {path                 , file:filename()}
-    | {consumption_interval , non_neg_integer()}
+      {consumption_interval , non_neg_integer()}
+    | {path                 , file:filename()}
     .
 
 -record(state,
