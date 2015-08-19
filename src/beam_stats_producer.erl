@@ -9,6 +9,9 @@
     [ start_link/0
     ,   subscribe/1
     , unsubscribe/1
+
+    % Force production and distribution. Blocks. Mainly for testing.
+    , force_production/0
     ]).
 
 %% gen_server callbacks
@@ -26,10 +29,14 @@
 %% ============================================================================
 
 -define(SIGNAL_PRODUCTION , beam_stats_production_signal).
+-define(FORCE_PRODUCTION  , beam_stats_force_production).
 
 -record(state,
     { consumers = ordsets:new() :: ordsets:ordset(pid())
     }).
+
+-type state() ::
+    #state{}.
 
 %% ============================================================================
 %%  API
@@ -48,12 +55,14 @@ subscribe(PID) ->
 unsubscribe(PID) ->
     gen_server:cast(?MODULE, {unsubscribe, PID}).
 
+-spec force_production() ->
+    {}.
+force_production() ->
+    gen_server:call(?MODULE, ?FORCE_PRODUCTION).
+
 %% ============================================================================
 %%  gen_server callbacks (unused)
 %% ============================================================================
-
-handle_call(_Request, _From, State) ->
-    ?METHOD_SHOULD_NOT_BE_USED(handle_call, State).
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
@@ -78,15 +87,25 @@ handle_cast({unsubscribe, PID}, #state{consumers=Consumers1}=State) ->
     Consumers2 = ordsets:del_element(PID, Consumers1),
     {noreply, State#state{consumers=Consumers2}}.
 
-handle_info(?SIGNAL_PRODUCTION, #state{consumers=ConsumersSet}=State) ->
-    ConsumersList = ordsets:to_list(ConsumersSet),
-    ok = collect_and_push_to_consumers(ConsumersList),
+handle_call(?FORCE_PRODUCTION, _From, State) ->
+    {} = produce(State),
+    {reply, {}, State}.
+
+handle_info(?SIGNAL_PRODUCTION, #state{}=State) ->
+    {} = produce(State),
     ok = schedule_next_production(),
     {noreply, State}.
 
 %% ============================================================================
 %%  Private
 %% ============================================================================
+
+-spec produce(state()) ->
+    {}.
+produce(#state{consumers=ConsumersSet}) ->
+    ConsumersList = ordsets:to_list(ConsumersSet),
+    ok = collect_and_push_to_consumers(ConsumersList),
+    {}.
 
 -spec schedule_first_production() ->
     ok.
