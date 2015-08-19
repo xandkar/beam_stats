@@ -5,8 +5,7 @@
 -behaviour(beam_stats_consumer).
 
 -export_type(
-    [         option/0
-    , connect_option/0
+    [ option/0
     ]).
 
 -export(
@@ -15,35 +14,38 @@
     , terminate/1
     ]).
 
--type connect_option() ::
-      {host    , inet:ip_address() | inet:hostname()}
-    | {port    , inet:port_number()}
-    | {timeout , timeout()}
-    .
-
 -type option() ::
       {consumption_interval , non_neg_integer()}
-    | {connect_options      , [connect_option()]}
+    | {host                 , inet:ip_address() | inet:hostname()}
+    | {port                 , inet:port_number()}
+    | {timeout              , timeout()}
     .
 
 -record(state,
-    { connect_options = []   :: [connect_option()]
-    , sock            = none :: hope_option:t(Socket :: port())
+    { sock    = none :: hope_option:t(Socket :: port())
+    , host           :: inet:ip_address() | inet:hostname()
+    , port           :: inet:port_number()
+    , timeout        :: timeout()
     }).
 
 -type state() ::
     #state{}.
 
 -define(GRAPHITE_PATH_PREFIX, "beam_stats").
+-define(DEFAULT_HOST        , "localhost").
+-define(DEFAULT_PORT        , 2003).
+-define(DEFAULT_TIMEOUT     , 5000).
 
 -spec init([option()]) ->
     {non_neg_integer(), state()}.
 init(Options) ->
-    ConnectOptions      = hope_kv_list:get(Options, connect_options     , []),
-    ConsumptionInterval = hope_kv_list:get(Options, consumption_interval, 60000),
+    Get = fun (Key, Default) -> hope_kv_list:get(Options, Key, Default) end,
+    ConsumptionInterval = Get(consumption_interval, 60000),
     State = #state
-        { connect_options = ConnectOptions
-        , sock            = none
+        { sock    = none
+        , host    = Get(host    , ?DEFAULT_HOST)
+        , port    = Get(port    , ?DEFAULT_PORT)
+        , timeout = Get(timeout , ?DEFAULT_TIMEOUT)
         },
     {ConsumptionInterval, State}.
 
@@ -83,13 +85,14 @@ try_to_send(#state{sock={some, Sock}}=State, Payload) ->
     state().
 try_to_connect_if_no_socket(#state{sock={some, _}}=State) ->
     State;
-try_to_connect_if_no_socket(#state{sock=none, connect_options=Options}=State) ->
-    DefaultHost    = "localhost",
-    DefaultPort    = 2003,
-    DefaultTimeout = 5000,
-    Host    = hope_kv_list:get(Options, host   , DefaultHost),
-    Port    = hope_kv_list:get(Options, port   , DefaultPort),
-    Timeout = hope_kv_list:get(Options, timeout, DefaultTimeout),
+try_to_connect_if_no_socket(
+    #state
+    { sock    = none
+    , host    = Host
+    , port    = Port
+    , timeout = Timeout
+    }=State
+) ->
     case gen_tcp:connect(Host, Port, [binary, {active, false}], Timeout)
     of  {ok, Sock} ->
             State#state{sock = {some, Sock}}

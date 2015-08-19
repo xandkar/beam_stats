@@ -16,11 +16,9 @@
     , {consumers,
         [ {beam_stats_consumer_graphite,
             [ {consumption_interval , 60000}
-            , {connect_options,
-                [ {host    , "localhost"}
-                , {port    , 2003}
-                , {timeout , 5000}
-                ]}
+            , {host                 , "localhost"}
+            , {port                 , 2003}
+            , {timeout              , 5000}
             ]}
         , {beam_stats_consumer_csv,
             [ {consumption_interval , 60000}
