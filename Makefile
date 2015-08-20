@@ -11,13 +11,17 @@ REBAR := ./rebar
 	deps_update \
 	dialyze \
 	dialyzer_blt_build \
-	test
+	test \
+	travis_ci
 
 all: \
+	travis_ci \
+	dialyze
+
+travis_ci: \
 	clean_all \
 	deps_get \
 	compile_all \
-	dialyze \
 	test
 
 deps_get:
