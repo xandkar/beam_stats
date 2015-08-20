@@ -1,6 +1,7 @@
 -module(beam_stats_consumer_csv).
 
 -include("include/beam_stats.hrl").
+-include("beam_stats_logging.hrl").
 
 -behaviour(beam_stats_consumer).
 
@@ -56,14 +57,14 @@ terminate(#state{file=FileOpt}) ->
 -spec try_to_write(state(), binary()) ->
     state().
 try_to_write(#state{file=none, path=Path}=State, _) ->
-    io:format("error: file closed: ~s~n", [Path]),
+    ?log_error("Writing to file (~p) failed: no file in state.", [Path]),
     State;
 try_to_write(#state{file={some, File}}=State, Payload) ->
     case file:write(File, Payload)
     of  ok ->
             State
     ;   {error, _}=Error ->
-            io:format("error: file:write/2 failed: ~p~n", [Error]),
+            ?log_error("file:write(~p, ~p) -> ~p", [File, Payload, Error]),
             % TODO: Maybe schedule retry?
             ok = file:close(File),
             State#state{file=none}
@@ -74,11 +75,12 @@ try_to_write(#state{file={some, File}}=State, Payload) ->
 try_to_open_if_no_file(#state{file={some, _}}=State) ->
     State;
 try_to_open_if_no_file(#state{file=none, path=Path}=State) ->
-    case file:open(Path, [append])
+    Options = [append],
+    case file:open(Path, Options)
     of  {ok, File} ->
             State#state{file = {some, File}}
     ;   {error, _}=Error ->
-            io:format("error: file:open/2 failed: ~p~n", [Error]),
+            ?log_error("file:open(~p, ~p) -> ~p", [Path, Options, Error]),
             State#state{file = none}
     end.
 

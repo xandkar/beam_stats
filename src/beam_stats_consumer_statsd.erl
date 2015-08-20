@@ -1,6 +1,7 @@
 -module(beam_stats_consumer_statsd).
 
 -include("include/beam_stats.hrl").
+-include("beam_stats_logging.hrl").
 
 -behaviour(beam_stats_consumer).
 
@@ -99,7 +100,7 @@ terminate(#state{sock=SockOpt}) ->
 -spec try_to_send(state(), binary()) ->
     state().
 try_to_send(#state{sock=none}=State, _) ->
-    io:format("error: socket closed~n"),
+    ?log_error("Sending failed. No socket in state."),
     % TODO: Maybe schedule retry?
     State;
 try_to_send(
@@ -114,7 +115,10 @@ try_to_send(
     of  ok ->
             State
     ;   {error, _}=Error ->
-            io:format("error: gen_udp:send/4 failed: ~p~n", [Error]),
+            ?log_error(
+                "gen_udp:send(~p, ~p, ~p, ~p) -> ~p",
+                [Sock, DstHost, DstPort, Error]
+            ),
             % TODO: Do something with unsent messages?
             ok = gen_udp:close(Sock),
             State#state{sock=none}
@@ -129,7 +133,7 @@ try_to_connect_if_no_socket(#state{sock=none, src_port=SrcPort}=State) ->
     of  {ok, Sock} ->
             State#state{sock = {some, Sock}}
     ;   {error, _}=Error ->
-            io:format("error: gen_udp:open/1 failed: ~p~n", [Error]),
+            ?log_error("gen_udp:open(~p) -> ~p", [SrcPort, Error]),
             State#state{sock = none}
     end.
 

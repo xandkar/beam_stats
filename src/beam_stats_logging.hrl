@@ -1,0 +1,2 @@
+-define(log_error(Format)      , error_logger:error_msg(Format)).
+-define(log_error(Format, Args), error_logger:error_msg(Format, Args)).

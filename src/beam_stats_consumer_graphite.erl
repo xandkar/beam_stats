@@ -1,6 +1,7 @@
 -module(beam_stats_consumer_graphite).
 
 -include("include/beam_stats.hrl").
+-include("beam_stats_logging.hrl").
 
 -behaviour(beam_stats_consumer).
 
@@ -67,7 +68,7 @@ terminate(#state{sock=SockOpt}) ->
 -spec try_to_send(state(), binary()) ->
     state().
 try_to_send(#state{sock=none}=State, _) ->
-    io:format("error: socket closed~n"),
+    ?log_error("Sending failed. No socket in state."),
     % TODO: Maybe schedule retry?
     State;
 try_to_send(#state{sock={some, Sock}}=State, Payload) ->
@@ -75,7 +76,7 @@ try_to_send(#state{sock={some, Sock}}=State, Payload) ->
     of  ok ->
             State
     ;   {error, _}=Error ->
-            io:format("error: gen_tcp:send/2 failed: ~p~n", [Error]),
+            ?log_error("gen_tcp:send(~p, ~p) -> ~p", [Sock, Payload, Error]),
             % TODO: Maybe schedule retry?
             ok = gen_tcp:close(Sock),
             State#state{sock=none}
@@ -93,11 +94,15 @@ try_to_connect_if_no_socket(
     , timeout = Timeout
     }=State
 ) ->
-    case gen_tcp:connect(Host, Port, [binary, {active, false}], Timeout)
+    Options = [binary, {active, false}],
+    case gen_tcp:connect(Host, Port, Options, Timeout)
     of  {ok, Sock} ->
             State#state{sock = {some, Sock}}
     ;   {error, _}=Error ->
-            io:format("error: gen_tcp:connect/4 failed: ~p~n", [Error]),
+            ?log_error(
+                "gen_tcp:connect(~p, ~p, ~p, ~p) -> ~p",
+                [Host, Port, Options, Timeout, Error]
+            ),
             State#state{sock = none}
     end.
 
