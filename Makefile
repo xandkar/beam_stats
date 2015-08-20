@@ -43,7 +43,11 @@ clean_app:
 	$(REBAR) clean skip_deps=true
 
 dialyze:
-	@dialyzer deps/*/ebin ebin
+	@dialyzer $(shell \
+		find . -name '*.beam' \
+		| grep -v deps/meck/ \
+	)
+
 
 dialyzer_blt_build:
 	@dialyzer \
