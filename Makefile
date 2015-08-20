@@ -55,4 +55,4 @@ dialyzer_blt_build:
 		)
 
 test:
-	@$(REBAR) ct skip_deps=true
+	@$(REBAR) ct skip_deps=true --verbose=1
