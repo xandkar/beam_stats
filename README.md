@@ -15,3 +15,35 @@ Essentially like `folsomite`, but better. Better in the following ways:
   conversions, as opposed to the nearly-arbitrary term-to-string conversions
   used in `folsomite`
 - Spec'd, tested and Dialyzed
+
+#### Configure consumers
+
+```erlang
+{env,
+  [ {production_interval , 30000}
+  , {consumers,
+      [ {beam_stats_consumer_statsd,
+          [ {consumption_interval , 60000}
+          , {dst_host             , "localhost"}
+          , {dst_port             , 8125}
+          , {src_port             , 8124}
+          ]}
+      , {beam_stats_consumer_graphite,
+          [ {consumption_interval , 60000}
+          , {host                 , "localhost"}
+          , {port                 , 2003}
+          , {timeout              , 5000}
+          ]}
+      , {beam_stats_consumer_csv,
+          [ {consumption_interval , 60000}
+          , {path                 , "beam_stats.csv"}
+          ]}
+
+      , {some_custom_consumer_module,
+          [ {foo, "abc"}
+          , {bar, 123}
+          ]}
+
+      ]}
+  ]}
+```
