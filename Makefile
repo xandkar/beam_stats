@@ -1,4 +1,4 @@
-REBAR := ./rebar --config rebar_test_build.config
+REBAR := ./rebar
 
 .PHONY: \
 	all \
