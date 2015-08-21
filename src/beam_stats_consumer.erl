@@ -52,7 +52,7 @@
 -define(SIGNAL_CONSUMPTION , beam_stats_consumption_signal).
 
 -record(state,
-    { consumer_module      :: atom()
+    { consumer_module      :: module()
     , consumer_state       :: term()
     , consumption_interval :: non_neg_integer()
     , beam_stats_queue     :: queue()
@@ -62,7 +62,7 @@
 %%  Public API
 %% ============================================================================
 
--spec add(atom(), term()) ->
+-spec add(module(), term()) ->
     supervisor:startchild_ret().
 add(ConsumerModule, ConsumerOptions) ->
     beam_stats_sup_consumers:start_child(ConsumerModule, ConsumerOptions).

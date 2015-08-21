@@ -17,7 +17,7 @@ production_interval() ->
     get_env(production_interval).
 
 -spec consumers() ->
-    [{ConsumerModule :: atom(), ConsumerDefinedOptionsData :: term()}].
+    [{ConsumerModule :: module(), ConsumerDefinedOptionsData :: term()}].
 consumers() ->
     get_env(consumers).
 
