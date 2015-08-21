@@ -4,9 +4,9 @@ beam_stats
 ==========
 
 Periodically collects and pushes VM metrics to arbitrary consumers. Defaults to
-StatsD (`beam_stats_consumer_statsd`) and includes off-by-default implementations for Graphite
-(`beam_stats_consumer_graphite`) and CSV file (`beam_stats_consumer_csv`)
-consumers).
+StatsD (`beam_stats_consumer_statsd`) and includes off-by-default
+implementations for Graphite (`beam_stats_consumer_graphite`) and CSV file
+(`beam_stats_consumer_csv`) consumers).
 
 Essentially like `folsomite`, but better. Better in the following ways:
 
