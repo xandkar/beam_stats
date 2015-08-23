@@ -48,4 +48,4 @@ t_send(_Cfg) ->
     ResultOfReceive = gen_udp:recv(ServerSocket, 0),
     ok = gen_udp:close(ServerSocket),
     {ok, {_, _, Data}} = ResultOfReceive,
-    <<"beam_stats.node_foo_host_bar.mem_type_foo:1|g\n">> = Data.
+    <<"beam_stats.node_foo_host_bar.memory.mem_type_foo:1|g\n">> = Data.

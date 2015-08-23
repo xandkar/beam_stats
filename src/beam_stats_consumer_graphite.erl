@@ -123,9 +123,9 @@ beam_stats_to_bin(#beam_stats
     TimestampInt = timestamp_to_integer(Timestamp),
     TimestampBin = integer_to_binary(TimestampInt),
     <<NodeIDBin/binary>> = node_id_to_bin(NodeID),
-    PairToBin = make_pair_to_bin(NodeIDBin, TimestampBin),
+    MemoryPairToBin = make_pair_to_bin(NodeIDBin, TimestampBin, <<"memory">>),
     MemoryBinPairs = lists:map(fun atom_int_to_bin_bin/1, Memory),
-    MemoryBins     = lists:map(PairToBin, MemoryBinPairs),
+    MemoryBins     = lists:map(MemoryPairToBin, MemoryBinPairs),
     AllBins =
         [ MemoryBins
         ],
@@ -136,13 +136,15 @@ beam_stats_to_bin(#beam_stats
 timestamp_to_integer({Megaseconds, Seconds, _}) ->
     Megaseconds * 1000000 + Seconds.
 
--spec make_pair_to_bin(binary(), binary()) ->
+-spec make_pair_to_bin(binary(), binary(), binary()) ->
     fun(({binary(), binary()}) -> binary()).
-make_pair_to_bin(<<NodeID/binary>>, <<TimestampBin/binary>>) ->
+make_pair_to_bin(<<NodeID/binary>>, <<TimestampBin/binary>>, <<Type/binary>>) ->
     fun ({<<K/binary>>, <<V/binary>>}) ->
         << ?GRAPHITE_PATH_PREFIX
          , "."
          , NodeID/binary
+         , "."
+         , Type/binary
          , "."
          , K/binary
          , " "

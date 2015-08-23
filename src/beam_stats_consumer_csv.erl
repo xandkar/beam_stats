@@ -101,9 +101,9 @@ beam_stats_to_bin(#beam_stats
 ) ->
     <<TimestampBin/binary>> = timestamp_to_bin(Timestamp),
     <<NodeIDBin/binary>> = node_id_to_bin(NodeID),
-    PairToBin = make_pair_to_bin(NodeIDBin, TimestampBin),
+    MemoryPairToBin = make_pair_to_bin(NodeIDBin, TimestampBin, <<"memory">>),
     MemoryBinPairs = lists:map(fun atom_int_to_bin_bin/1, Memory),
-    MemoryBins     = lists:map(PairToBin, MemoryBinPairs),
+    MemoryBins     = lists:map(MemoryPairToBin, MemoryBinPairs),
     AllBins =
         [ MemoryBins
         ],
@@ -131,13 +131,15 @@ timestamp_to_float({ComponentMega, ComponentWhole, ComponentMicro}) ->
     TotalMicroSeconds = (TotalWholeSeconds * OneMillion) + ComponentMicro,
     TotalMicroSeconds / OneMillion.
 
--spec make_pair_to_bin(binary(), binary()) ->
+-spec make_pair_to_bin(binary(), binary(), binary()) ->
     fun(({binary(), binary()}) -> binary()).
-make_pair_to_bin(<<NodeID/binary>>, <<TimestampBin/binary>>) ->
+make_pair_to_bin(<<NodeID/binary>>, <<TimestampBin/binary>>, <<Type/binary>>) ->
     fun ({<<K/binary>>, <<V/binary>>}) ->
         << TimestampBin/binary
          , "|"
          , NodeID/binary
+         , "|"
+         , Type/binary
          , "|"
          , K/binary
          , "|"

@@ -157,8 +157,9 @@ memory_to_msgs(Memory) ->
 -spec memory_component_to_statsd_msg({atom(), non_neg_integer()}) ->
     statsd_msg().
 memory_component_to_statsd_msg({MemType, MemSize}) when MemSize >= 0 ->
+    MemTypeBin = atom_to_binary(MemType, latin1),
     #statsd_msg
-    { name  = atom_to_binary(MemType, latin1)
+    { name  = <<"memory.", MemTypeBin/binary>>
     , value = MemSize
     , type  = gauge
     }.
