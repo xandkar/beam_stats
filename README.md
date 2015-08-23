@@ -22,7 +22,9 @@ Essentially like `folsomite`, but different. Different in the following ways:
       nearly-arbitrary term-to-string conversions used in `folsomite`
     + Spec'd, tested and Dialyzed
 
-#### Configure consumers
+### Adding consumers
+
+#### At app config time
 
 ```erlang
 {env,
@@ -52,3 +54,13 @@ Essentially like `folsomite`, but different. Different in the following ways:
       ]}
   ]}
 ```
+
+#### Dynamically
+
+```erlang
+beam_stats_consumer:add(consumer_module, ConsumerOptions).
+```
+
+### Removing consumers
+
+Not yet implemented.
