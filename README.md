@@ -3,20 +3,24 @@
 beam_stats
 ==========
 
-Periodically collects and pushes VM metrics to arbitrary consumers. Defaults to
-StatsD (`beam_stats_consumer_statsd`) and includes off-by-default
-implementations for Graphite (`beam_stats_consumer_graphite`) and CSV file
-(`beam_stats_consumer_csv`) consumers).
+Periodically collects and pushes VM metrics to arbitrary consumer processes,
+which, in-turn, can do whatever they want with the given data (such as
+serialize and forward to some time series storage). Includes, off by default,
+example implementations of consumers for:
 
-Essentially like `folsomite`, but better. Better in the following ways:
+- StatsD (`beam_stats_consumer_statsd`)
+- Graphite (`beam_stats_consumer_graphite`)
+- CSV file (`beam_stats_consumer_csv`)
+
+Essentially like `folsomite`, but different. Different in the following ways:
 
 - More-general: consumers other than graphite can be defined
 - More-focused: only concerned with VM metrics, while `folsomite` ships off
   _everything_ from `folsom` (in addition to VM metrics)
-- Easier-to-reason-about implementation: well-defined metrics-to-binary
-  conversions, as opposed to the nearly-arbitrary term-to-string conversions
-  used in `folsomite`
-- Spec'd, tested and Dialyzed
+- Easier-(for me!)-to-reason-about implementation:
+    + Well-defined metrics-to-binary conversions, as opposed to the
+      nearly-arbitrary term-to-string conversions used in `folsomite`
+    + Spec'd, tested and Dialyzed
 
 #### Configure consumers
 
@@ -40,10 +44,9 @@ Essentially like `folsomite`, but better. Better in the following ways:
           [ {consumption_interval , 60000}
           , {path                 , "beam_stats.csv"}
           ]}
-
       , {some_custom_consumer_module,
-          [ {foo, "abc"}
-          , {bar, 123}
+          [ {some_custom_option_a, "abc"}
+          , {some_custom_option_b, 123}
           ]}
 
       ]}
