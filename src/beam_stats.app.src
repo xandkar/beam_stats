@@ -1,7 +1,7 @@
 {application, beam_stats,
  [
   {description, "Periodic VM stats production and consumption."},
-  {vsn, "0.1.0"},
+  {vsn, "0.1.1"},
   {registered, []},
   {applications,
     [ kernel
@@ -13,14 +13,7 @@
 
   {env,
     [ {production_interval , 30000}
-    , {consumers,
-        [ {beam_stats_consumer_statsd,
-            [ {consumption_interval , 60000}
-            , {dst_host             , "localhost"}
-            , {dst_port             , 8125}
-            , {src_port             , 8124}
-            ]}
-        ]}
+    , {consumers, []}
     ]}
 
  ]}.
