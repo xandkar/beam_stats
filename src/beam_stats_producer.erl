@@ -33,6 +33,7 @@
 
 -record(state,
     { consumers = ordsets:new() :: ordsets:ordset(pid())
+    , stats_state :: beam_stats_state:t()
     }).
 
 -type state() ::
@@ -77,7 +78,8 @@ terminate(_Reason, _State) ->
 init([]) ->
     ok = schedule_first_production(),
     Consumers = ordsets:new(),
-    {ok, #state{consumers=Consumers}}.
+    StatsState = beam_stats_state:new(),
+    {ok, #state{consumers=Consumers, stats_state=StatsState}}.
 
 handle_cast({subscribe, PID}, #state{consumers=Consumers1}=State) ->
     Consumers2 = ordsets:add_element(PID, Consumers1),
@@ -87,25 +89,27 @@ handle_cast({unsubscribe, PID}, #state{consumers=Consumers1}=State) ->
     Consumers2 = ordsets:del_element(PID, Consumers1),
     {noreply, State#state{consumers=Consumers2}}.
 
-handle_call(?FORCE_PRODUCTION, _From, State) ->
-    {} = produce(State),
-    {reply, {}, State}.
+handle_call(?FORCE_PRODUCTION, _From, State1) ->
+    State2 = produce(State1),
+    {reply, {}, State2}.
 
-handle_info(?SIGNAL_PRODUCTION, #state{}=State) ->
-    {} = produce(State),
+handle_info(?SIGNAL_PRODUCTION, #state{}=State1) ->
+    State2 = produce(State1),
     ok = schedule_next_production(),
-    {noreply, State}.
+    {noreply, State2}.
 
 %% ============================================================================
 %%  Private
 %% ============================================================================
 
 -spec produce(state()) ->
-    {}.
-produce(#state{consumers=ConsumersSet}) ->
+    state().
+produce(#state{consumers=ConsumersSet, stats_state=StatsState1}=State) ->
+    StatsState2 = beam_stats_state:update(StatsState1),
+    Stats       = beam_stats_state:export(StatsState2),
     ConsumersList = ordsets:to_list(ConsumersSet),
-    ok = collect_and_push_to_consumers(ConsumersList),
-    {}.
+    ok = push_to_consumers(Stats, ConsumersList),
+    State#state{stats_state = StatsState2}.
 
 -spec schedule_first_production() ->
     ok.
@@ -120,9 +124,8 @@ schedule_next_production() ->
     _ = erlang:send_after(ProductionInterval, self(), ?SIGNAL_PRODUCTION),
     ok.
 
--spec collect_and_push_to_consumers([pid()]) ->
+-spec push_to_consumers(beam_stats:t(), [pid()]) ->
     ok.
-collect_and_push_to_consumers(Consumers) ->
-    BEAMStats = beam_stats:collect(),
-    Push = fun (Consumer) -> gen_server:cast(Consumer, BEAMStats) end,
+push_to_consumers(Stats, Consumers) ->
+    Push = fun (Consumer) -> gen_server:cast(Consumer, Stats) end,
     lists:foreach(Push, Consumers).

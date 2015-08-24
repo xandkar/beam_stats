@@ -142,12 +142,36 @@ beam_stats_queue_to_binary(Q) ->
 beam_stats_to_bins(#beam_stats
     { node_id = NodeID
     , memory  = Memory
+    , io_bytes_in  = IOBytesIn
+    , io_bytes_out = IOBytesOut
     }
 ) ->
     NodeIDBin = node_id_to_bin(NodeID),
-    Msgs1 = memory_to_msgs(Memory),
+    Msgs1 =
+        [ io_bytes_in_to_msg(IOBytesIn)
+        , io_bytes_out_to_msg(IOBytesOut)
+        | memory_to_msgs(Memory)
+        ],
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
+
+-spec io_bytes_in_to_msg(non_neg_integer()) ->
+    statsd_msg().
+io_bytes_in_to_msg(IOBytesIn) ->
+    #statsd_msg
+    { name  = <<"io.bytes_in">>
+    , value = IOBytesIn
+    , type  = gauge
+    }.
+
+-spec io_bytes_out_to_msg(non_neg_integer()) ->
+    statsd_msg().
+io_bytes_out_to_msg(IOBytesOut) ->
+    #statsd_msg
+    { name  = <<"io.bytes_out">>
+    , value = IOBytesOut
+    , type  = gauge
+    }.
 
 -spec memory_to_msgs([{atom(), non_neg_integer()}]) ->
     [statsd_msg()].
