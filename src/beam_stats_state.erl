@@ -60,9 +60,9 @@ new() ->
 -spec update(t()) ->
     t().
 update(?T
-    { previous_io_bytes_in  = PreviousIOBytesIn
-    , previous_io_bytes_out = PreviousIOBytesOut
-    , previous_context_switches = PreviousContextSwitches
+    { current_io_bytes_in      = PreviousIOBytesIn
+    , current_io_bytes_out     = PreviousIOBytesOut
+    , current_context_switches = PreviousContextSwitches
     }
 ) ->
     { {input  , CurrentIOBytesIn}
