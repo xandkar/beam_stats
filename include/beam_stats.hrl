@@ -6,6 +6,7 @@
     , io_bytes_out :: non_neg_integer()
     , context_switches :: non_neg_integer()
     , reductions       :: non_neg_integer()
+    , run_queue        :: non_neg_integer()
     %, statistics   :: [{atom()       , term()}]
     %, system       :: [{atom()       , term()}]
     %, process      :: [{atom()       , term()}]

@@ -41,6 +41,7 @@ t_send(_Cfg) ->
     , io_bytes_out = 7
     , context_switches = 5
     , reductions       = 9
+    , run_queue        = 17
     },
     ServerPort = 8125,
     {ok, ServerSocket} = gen_udp:open(ServerPort, [binary, {active, false}]),
@@ -52,9 +53,11 @@ t_send(_Cfg) ->
     ResultOfReceive = gen_udp:recv(ServerSocket, 0),
     ok = gen_udp:close(ServerSocket),
     {ok, {_, _, Data}} = ResultOfReceive,
+    ct:log("Packet: ~n~s~n", [Data]),
     << "beam_stats.node_foo_host_bar.io.bytes_in:3|g\n"
      , "beam_stats.node_foo_host_bar.io.bytes_out:7|g\n"
      , "beam_stats.node_foo_host_bar.context_switches:5|g\n"
      , "beam_stats.node_foo_host_bar.reductions:9|g\n"
+     , "beam_stats.node_foo_host_bar.run_queue:17|g\n"
      , "beam_stats.node_foo_host_bar.memory.mem_type_foo:1|g\n"
     >> = Data.

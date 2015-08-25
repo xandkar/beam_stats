@@ -146,6 +146,7 @@ beam_stats_to_bins(#beam_stats
     , io_bytes_out = IOBytesOut
     , context_switches = ContextSwitches
     , reductions       = Reductions
+    , run_queue        = RunQueue
     }
 ) ->
     NodeIDBin = node_id_to_bin(NodeID),
@@ -154,10 +155,20 @@ beam_stats_to_bins(#beam_stats
         , io_bytes_out_to_msg(IOBytesOut)
         , context_switches_to_msg(ContextSwitches)
         , reductions_to_msg(Reductions)
+        , run_queue_to_msg(RunQueue)
         | memory_to_msgs(Memory)
         ],
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
+
+-spec run_queue_to_msg(non_neg_integer()) ->
+    statsd_msg().
+run_queue_to_msg(RunQueue) ->
+    #statsd_msg
+    { name  = <<"run_queue">>
+    , value = RunQueue
+    , type  = gauge
+    }.
 
 -spec reductions_to_msg(non_neg_integer()) ->
     statsd_msg().

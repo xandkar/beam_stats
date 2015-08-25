@@ -26,6 +26,7 @@
     ,  current_context_switches :: non_neg_integer()
 
     , reductions                :: non_neg_integer()
+    , run_queue                 :: non_neg_integer()
     }).
 
 -define(T, #?MODULE).
@@ -41,6 +42,7 @@ new() ->
     } = erlang:statistics(io),
     {CurrentContextSwitches, 0} = erlang:statistics(context_switches),
     {_ReductionsTotal, ReductionsDelta} = erlang:statistics(reductions),
+    RunQueue = erlang:statistics(run_queue),
     ?T
     { timestamp             = os:timestamp()
     , node_id               = erlang:node()
@@ -52,6 +54,7 @@ new() ->
     , previous_context_switches = 0
     ,  current_context_switches = CurrentContextSwitches
     , reductions                = ReductionsDelta
+    , run_queue                 = RunQueue
     }.
 
 -spec update(t()) ->
@@ -67,6 +70,7 @@ update(?T
     } = erlang:statistics(io),
     {CurrentContextSwitches, 0} = erlang:statistics(context_switches),
     {_ReductionsTotal, ReductionsDelta} = erlang:statistics(reductions),
+    RunQueue = erlang:statistics(run_queue),
     ?T
     { timestamp             = os:timestamp()
     , node_id               = erlang:node()
@@ -78,6 +82,7 @@ update(?T
     , previous_context_switches = PreviousContextSwitches
     ,  current_context_switches = CurrentContextSwitches
     , reductions                = ReductionsDelta
+    , run_queue                 = RunQueue
     }.
 
 -spec export(t()) ->
@@ -94,6 +99,7 @@ export(
     , previous_context_switches = PreviousContextSwitches
     ,  current_context_switches = CurrentContextSwitches
     , reductions                = Reductions
+    , run_queue                 = RunQueue
     }
 ) ->
     #beam_stats
@@ -104,4 +110,5 @@ export(
     , io_bytes_out = CurrentIOBytesOut - PreviousIOBytesOut
     , context_switches = CurrentContextSwitches - PreviousContextSwitches
     , reductions       = Reductions
+    , run_queue        = RunQueue
     }.
