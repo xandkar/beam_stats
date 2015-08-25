@@ -144,16 +144,27 @@ beam_stats_to_bins(#beam_stats
     , memory  = Memory
     , io_bytes_in  = IOBytesIn
     , io_bytes_out = IOBytesOut
+    , context_switches = ContextSwitches
     }
 ) ->
     NodeIDBin = node_id_to_bin(NodeID),
     Msgs1 =
         [ io_bytes_in_to_msg(IOBytesIn)
         , io_bytes_out_to_msg(IOBytesOut)
+        , context_switches_to_msg(ContextSwitches)
         | memory_to_msgs(Memory)
         ],
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
+
+-spec context_switches_to_msg(non_neg_integer()) ->
+    statsd_msg().
+context_switches_to_msg(ContextSwitches) ->
+    #statsd_msg
+    { name  = <<"context_switches">>
+    , value = ContextSwitches
+    , type  = gauge
+    }.
 
 -spec io_bytes_in_to_msg(non_neg_integer()) ->
     statsd_msg().

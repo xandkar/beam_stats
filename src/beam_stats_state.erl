@@ -16,10 +16,14 @@
     { timestamp             :: erlang:timestamp()
     , node_id               :: atom()
     , memory                :: [{atom(), non_neg_integer()}]
+
     , previous_io_bytes_in  :: non_neg_integer()
     , previous_io_bytes_out :: non_neg_integer()
     , current_io_bytes_in   :: non_neg_integer()
     , current_io_bytes_out  :: non_neg_integer()
+
+    , previous_context_switches :: non_neg_integer()
+    ,  current_context_switches :: non_neg_integer()
     }).
 
 -define(T, #?MODULE).
@@ -33,6 +37,7 @@ new() ->
     { {input  , CurrentIOBytesIn}
     , {output , CurrentIOBytesOut}
     } = erlang:statistics(io),
+    {CurrentContextSwitches, 0} = erlang:statistics(context_switches),
     ?T
     { timestamp             = os:timestamp()
     , node_id               = erlang:node()
@@ -41,6 +46,8 @@ new() ->
     , previous_io_bytes_out = 0
     , current_io_bytes_in   = CurrentIOBytesIn
     , current_io_bytes_out  = CurrentIOBytesOut
+    , previous_context_switches = 0
+    ,  current_context_switches = CurrentContextSwitches
     }.
 
 -spec update(t()) ->
@@ -48,11 +55,13 @@ new() ->
 update(?T
     { previous_io_bytes_in  = PreviousIOBytesIn
     , previous_io_bytes_out = PreviousIOBytesOut
+    , previous_context_switches = PreviousContextSwitches
     }
 ) ->
     { {input  , CurrentIOBytesIn}
     , {output , CurrentIOBytesOut}
     } = erlang:statistics(io),
+    {CurrentContextSwitches, 0} = erlang:statistics(context_switches),
     ?T
     { timestamp             = os:timestamp()
     , node_id               = erlang:node()
@@ -61,6 +70,8 @@ update(?T
     , previous_io_bytes_out = PreviousIOBytesOut
     , current_io_bytes_in   = CurrentIOBytesIn
     , current_io_bytes_out  = CurrentIOBytesOut
+    , previous_context_switches = PreviousContextSwitches
+    ,  current_context_switches = CurrentContextSwitches
     }.
 
 -spec export(t()) ->
@@ -74,6 +85,8 @@ export(
     , previous_io_bytes_out = PreviousIOBytesOut
     , current_io_bytes_in   = CurrentIOBytesIn
     , current_io_bytes_out  = CurrentIOBytesOut
+    , previous_context_switches = PreviousContextSwitches
+    ,  current_context_switches = CurrentContextSwitches
     }
 ) ->
     #beam_stats
@@ -82,4 +95,5 @@ export(
     , memory       = Memory
     , io_bytes_in  = CurrentIOBytesIn  - PreviousIOBytesIn
     , io_bytes_out = CurrentIOBytesOut - PreviousIOBytesOut
+    , context_switches = CurrentContextSwitches - PreviousContextSwitches
     }.
