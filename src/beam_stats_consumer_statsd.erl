@@ -145,6 +145,7 @@ beam_stats_to_bins(#beam_stats
     , io_bytes_in  = IOBytesIn
     , io_bytes_out = IOBytesOut
     , context_switches = ContextSwitches
+    , reductions       = Reductions
     }
 ) ->
     NodeIDBin = node_id_to_bin(NodeID),
@@ -152,10 +153,20 @@ beam_stats_to_bins(#beam_stats
         [ io_bytes_in_to_msg(IOBytesIn)
         , io_bytes_out_to_msg(IOBytesOut)
         , context_switches_to_msg(ContextSwitches)
+        , reductions_to_msg(Reductions)
         | memory_to_msgs(Memory)
         ],
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
+
+-spec reductions_to_msg(non_neg_integer()) ->
+    statsd_msg().
+reductions_to_msg(Reductions) ->
+    #statsd_msg
+    { name  = <<"reductions">>
+    , value = Reductions
+    , type  = gauge
+    }.
 
 -spec context_switches_to_msg(non_neg_integer()) ->
     statsd_msg().

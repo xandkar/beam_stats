@@ -40,6 +40,7 @@ t_send(_Cfg) ->
     , io_bytes_in  = 3
     , io_bytes_out = 7
     , context_switches = 5
+    , reductions       = 9
     },
     ServerPort = 8125,
     {ok, ServerSocket} = gen_udp:open(ServerPort, [binary, {active, false}]),
@@ -54,5 +55,6 @@ t_send(_Cfg) ->
     << "beam_stats.node_foo_host_bar.io.bytes_in:3|g\n"
      , "beam_stats.node_foo_host_bar.io.bytes_out:7|g\n"
      , "beam_stats.node_foo_host_bar.context_switches:5|g\n"
+     , "beam_stats.node_foo_host_bar.reductions:9|g\n"
      , "beam_stats.node_foo_host_bar.memory.mem_type_foo:1|g\n"
     >> = Data.
