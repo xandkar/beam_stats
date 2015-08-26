@@ -1,7 +1,5 @@
 -module(beam_stats_producer).
 
--include("beam_stats.hrl").
-
 -behaviour(gen_server).
 
 %% API
@@ -10,8 +8,8 @@
     ,   subscribe/1
     , unsubscribe/1
 
-    % Force production and distribution. Blocks. Mainly for testing.
-    , force_production/0
+    % For testing
+    , sync_produce_consume/0
     ]).
 
 %% gen_server callbacks
@@ -28,8 +26,8 @@
 %% Internal data
 %% ============================================================================
 
--define(SIGNAL_PRODUCTION , beam_stats_production_signal).
--define(FORCE_PRODUCTION  , beam_stats_force_production).
+-define(PRODUCE_SYNC  , produce_sync).
+-define(PRODUCE_ASYNC , produce_async).
 
 -record(state,
     { consumers = ordsets:new() :: ordsets:ordset(pid())
@@ -56,10 +54,10 @@ subscribe(PID) ->
 unsubscribe(PID) ->
     gen_server:cast(?MODULE, {unsubscribe, PID}).
 
--spec force_production() ->
+-spec sync_produce_consume() ->
     {}.
-force_production() ->
-    gen_server:call(?MODULE, ?FORCE_PRODUCTION).
+sync_produce_consume() ->
+    {} = gen_server:call(?MODULE, ?PRODUCE_SYNC).
 
 %% ============================================================================
 %%  gen_server callbacks (unused)
@@ -89,12 +87,12 @@ handle_cast({unsubscribe, PID}, #state{consumers=Consumers1}=State) ->
     Consumers2 = ordsets:del_element(PID, Consumers1),
     {noreply, State#state{consumers=Consumers2}}.
 
-handle_call(?FORCE_PRODUCTION, _From, State1) ->
-    State2 = produce(State1),
+handle_call(?PRODUCE_SYNC, _From, State1) ->
+    State2 = produce_sync(State1),
     {reply, {}, State2}.
 
-handle_info(?SIGNAL_PRODUCTION, #state{}=State1) ->
-    State2 = produce(State1),
+handle_info(?PRODUCE_ASYNC, #state{}=State1) ->
+    State2 = produce_async(State1),
     ok = schedule_next_production(),
     {noreply, State2}.
 
@@ -102,30 +100,41 @@ handle_info(?SIGNAL_PRODUCTION, #state{}=State1) ->
 %%  Private
 %% ============================================================================
 
--spec produce(state()) ->
+-spec produce_sync(state()) ->
     state().
-produce(#state{consumers=ConsumersSet, stats_state=StatsState1}=State) ->
+produce_sync(#state{}=State) ->
+    produce(State, fun beam_stats_consumer:consume_sync/2).
+
+-spec produce_async(state()) ->
+    state().
+produce_async(#state{}=State) ->
+    produce(State, fun beam_stats_consumer:consume_async/2).
+
+-spec produce(state(), fun((pid(), term()) -> ok)) ->
+    state().
+produce(
+    #state
+    { consumers   = ConsumersSet
+    , stats_state = StatsState1
+    }=State,
+    MsgSendFun
+) ->
     StatsState2 = beam_stats_state:update(StatsState1),
     Stats       = beam_stats_state:export(StatsState2),
     ConsumersList = ordsets:to_list(ConsumersSet),
-    ok = push_to_consumers(Stats, ConsumersList),
+    Send = fun (Consumer) -> MsgSendFun(Consumer, Stats) end,
+    ok = lists:foreach(Send, ConsumersList),
     State#state{stats_state = StatsState2}.
 
 -spec schedule_first_production() ->
     ok.
 schedule_first_production() ->
-    _ = self() ! ?SIGNAL_PRODUCTION,
+    _ = self() ! ?PRODUCE_ASYNC,
     ok.
 
 -spec schedule_next_production() ->
     ok.
 schedule_next_production() ->
     ProductionInterval = beam_stats_config:production_interval(),
-    _ = erlang:send_after(ProductionInterval, self(), ?SIGNAL_PRODUCTION),
+    _ = erlang:send_after(ProductionInterval, self(), ?PRODUCE_ASYNC),
     ok.
-
--spec push_to_consumers(beam_stats:t(), [pid()]) ->
-    ok.
-push_to_consumers(Stats, Consumers) ->
-    Push = fun (Consumer) -> gen_server:cast(Consumer, Stats) end,
-    lists:foreach(Push, Consumers).
