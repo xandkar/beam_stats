@@ -8,10 +8,10 @@
     , reductions       :: non_neg_integer()
     , run_queue        :: non_neg_integer()
     , ets              :: beam_stats_ets:t()
+    , processes        :: beam_stats_processes:t()
 
     %, statistics   :: [{atom()       , term()}]
     %, system       :: [{atom()       , term()}]
-    %, process      :: [{atom()       , term()}]
     %, port         :: [{atom()       , term()}]
     %, dets         :: [{atom()       , term()}]
     }).
