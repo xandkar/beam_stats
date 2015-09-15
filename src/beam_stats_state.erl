@@ -15,6 +15,7 @@
 -record(snapshots,
     { memory     :: [{atom(), non_neg_integer()}]
     , run_queue  :: non_neg_integer()
+    , ets        :: beam_stats_ets:t()
     }).
 
 -type snapshots() ::
@@ -83,6 +84,7 @@ export(
         #snapshots
         { memory    = Memory
         , run_queue = RunQueue
+        , ets       = ETS
         }
     , deltas =
         #deltas
@@ -111,12 +113,14 @@ export(
     , context_switches = CurrentContextSwitches - PreviousContextSwitches
     , reductions       = Reductions
     , run_queue        = RunQueue
+    , ets              = ETS
     }.
 
 snapshots_new() ->
     #snapshots
     { memory     = erlang:memory()
     , run_queue  = erlang:statistics(run_queue)
+    , ets        = beam_stats_ets:collect()
     }.
 
 deltas_new() ->

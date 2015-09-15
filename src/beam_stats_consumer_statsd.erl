@@ -1,6 +1,7 @@
 -module(beam_stats_consumer_statsd).
 
 -include("include/beam_stats.hrl").
+-include("include/beam_stats_ets_table.hrl").
 -include("beam_stats_logging.hrl").
 
 -behaviour(beam_stats_consumer).
@@ -147,6 +148,7 @@ beam_stats_to_bins(#beam_stats
     , context_switches = ContextSwitches
     , reductions       = Reductions
     , run_queue        = RunQueue
+    , ets              = ETS
     }
 ) ->
     NodeIDBin = node_id_to_bin(NodeID),
@@ -157,7 +159,8 @@ beam_stats_to_bins(#beam_stats
         , reductions_to_msg(Reductions)
         , run_queue_to_msg(RunQueue)
         | memory_to_msgs(Memory)
-        ],
+        ]
+        ++ ets_to_msgs(ETS),
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
 
@@ -205,6 +208,38 @@ io_bytes_out_to_msg(IOBytesOut) ->
     , value = IOBytesOut
     , type  = gauge
     }.
+
+-spec ets_to_msgs(beam_stats_ets:t()) ->
+    [statsd_msg()].
+ets_to_msgs(PerTableStats) ->
+    NestedMsgs = lists:map(fun ets_table_to_msgs/1, PerTableStats),
+    lists:append(NestedMsgs).
+
+-spec ets_table_to_msgs(beam_stats_ets_table:t()) ->
+    [statsd_msg()].
+ets_table_to_msgs(#beam_stats_ets_table
+    { id     = ID
+    , name   = Name
+    , size   = Size
+    , memory = Memory
+    }
+) ->
+    IDBin   = beam_stats_ets_table:id_to_bin(ID),
+    NameBin = atom_to_binary(Name, latin1),
+    NameAndID = <<NameBin/binary, ".", IDBin/binary>>,
+    SizeMsg =
+        #statsd_msg
+        { name  = <<"ets_table.size.", NameAndID/binary>>
+        , value = Size
+        , type  = gauge
+        },
+    MemoryMsg =
+        #statsd_msg
+        { name  = <<"ets_table.memory.", NameAndID/binary>>
+        , value = Memory
+        , type  = gauge
+        },
+    [SizeMsg, MemoryMsg].
 
 -spec memory_to_msgs([{atom(), non_neg_integer()}]) ->
     [statsd_msg()].
