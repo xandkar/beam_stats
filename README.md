@@ -35,6 +35,7 @@ Essentially like `folsomite`, but different. Different in the following ways:
           , {dst_host             , "localhost"}
           , {dst_port             , 8125}
           , {src_port             , 8124}
+          , {num_msgs_per_packet  , 10}
           ]}
       , {beam_stats_consumer_graphite,
           [ {consumption_interval , 60000}
