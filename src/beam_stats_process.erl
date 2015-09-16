@@ -9,6 +9,7 @@
 
 -export(
     [ of_pid/1
+    , print/1
     ]).
 
 -type status() ::
@@ -24,6 +25,10 @@
 
 -type t() ::
     ?T{}.
+
+%% ============================================================================
+%% Public API
+%% ============================================================================
 
 -spec of_pid(pid()) ->
     t().
@@ -41,6 +46,52 @@ of_pid(Pid) ->
     , stack_size        = pid_info_exn(Pid, stack_size)
     , message_queue_len = pid_info_exn(Pid, message_queue_len)
     }.
+
+-spec print(t()) ->
+    ok.
+print(
+    ?T
+    { pid               = Pid
+    , registered_name   = RegisteredNameOpt
+    , raw_initial_call  = InitialCallRaw
+    , otp_initial_call  = InitialCallOTPOpt
+    , otp_ancestors     = AncestorsOpt
+    , status            = Status
+    , memory            = Memory
+    , total_heap_size   = TotalHeapSize
+    , stack_size        = StackSize
+    , message_queue_len = MsgQueueLen
+    }
+) ->
+    io:format("--------------------------------------------------~n"),
+    io:format(
+        "Pid               : ~p~n"
+        "RegisteredNameOpt : ~p~n"
+        "InitialCallRaw    : ~p~n"
+        "InitialCallOTPOpt : ~p~n"
+        "AncestorsOpt      : ~p~n"
+        "Status            : ~p~n"
+        "Memory            : ~p~n"
+        "TotalHeapSize     : ~p~n"
+        "StackSize         : ~p~n"
+        "MsgQueueLen       : ~p~n"
+        "~n",
+        [ Pid
+        , RegisteredNameOpt
+        , InitialCallRaw
+        , InitialCallOTPOpt
+        , AncestorsOpt
+        , Status
+        , Memory
+        , TotalHeapSize
+        , StackSize
+        , MsgQueueLen
+        ]
+    ).
+
+%% ============================================================================
+%% Private helpers
+%% ============================================================================
 
 pid_info_exn(Pid, Key) ->
     {some, Value} = pid_info_opt(Pid, Key),
