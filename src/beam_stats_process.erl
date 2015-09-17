@@ -1,17 +1,18 @@
 -module(beam_stats_process).
 
+-include("include/beam_stats_process_ancestry.hrl").
 -include("include/beam_stats_process.hrl").
 
 -export_type(
     [ t/0
     , status/0
-    , ancestor/0
+    , ancestry/0
     , best_known_origin/0
     ]).
 
 -export(
     [ of_pid/1
-    , best_known_origin/1
+    , get_best_known_origin/1
     , print/1
     ]).
 
@@ -24,15 +25,12 @@
     | waiting
     .
 
--type ancestor() ::
-      {otp_ancestors    , [pid() | atom()]}
-    | {otp_initial_call , mfa()}
-    | {raw_initial_call , mfa()}
-    .
+-type ancestry() ::
+    #beam_stats_process_ancestry{}.
 
 -type best_known_origin() ::
       {registered_name , atom()}
-    | {ancestry        , [ancestor()]}
+    | {ancestry        , ancestry()}
     .
 
 -define(T, #?MODULE).
@@ -48,12 +46,16 @@
     t().
 of_pid(Pid) ->
     Dict = pid_info_exn(Pid, dictionary),
+    Ancestry =
+        #beam_stats_process_ancestry
+        { raw_initial_call  = pid_info_exn(Pid, initial_call)
+        , otp_initial_call  = hope_kv_list:get(Dict, '$initial_call')
+        , otp_ancestors     = hope_kv_list:get(Dict, '$ancestors')
+        },
     ?T
     { pid               = Pid
     , registered_name   = pid_info_opt(Pid, registered_name)
-    , raw_initial_call  = pid_info_exn(Pid, initial_call)
-    , otp_initial_call  = hope_kv_list:get(Dict, '$initial_call')
-    , otp_ancestors     = hope_kv_list:get(Dict, '$ancestors')
+    , ancestry          = Ancestry
     , status            = pid_info_exn(Pid, status)
     , memory            = pid_info_exn(Pid, memory)
     , total_heap_size   = pid_info_exn(Pid, total_heap_size)
@@ -67,9 +69,11 @@ print(
     ?T
     { pid               = Pid
     , registered_name   = RegisteredNameOpt
-    , raw_initial_call  = InitialCallRaw
-    , otp_initial_call  = InitialCallOTPOpt
-    , otp_ancestors     = AncestorsOpt
+    , ancestry          = #beam_stats_process_ancestry
+        { raw_initial_call  = InitialCallRaw
+        , otp_initial_call  = InitialCallOTPOpt
+        , otp_ancestors     = AncestorsOpt
+        }
     , status            = Status
     , memory            = Memory
     , total_heap_size   = TotalHeapSize
@@ -77,7 +81,7 @@ print(
     , message_queue_len = MsgQueueLen
     }=T
 ) ->
-    BestKnownOrigin = best_known_origin(T),
+    BestKnownOrigin = get_best_known_origin(T),
     io:format("--------------------------------------------------~n"),
     io:format(
         "Pid               : ~p~n"
@@ -138,33 +142,9 @@ pid_info_opt(Pid, Key) ->
 
 -define(TAG(Tag), fun (X) -> {Tag, X} end).
 
--spec best_known_origin(t()) ->
+-spec get_best_known_origin(t()) ->
     best_known_origin().
-best_known_origin(?T{registered_name={some, RegisteredName}}) ->
+get_best_known_origin(?T{registered_name={some, RegisteredName}}) ->
     {registered_name, RegisteredName};
-best_known_origin(
-    ?T
-    { pid               = _Pid
-    , registered_name   = none
-    , raw_initial_call  = InitCallRaw
-    , otp_initial_call  = InitCallOTPOpt1
-    , otp_ancestors     = AncestorsOpt1
-    , status            = _Status
-    , memory            = _Memory
-    , total_heap_size   = _TotalHeapSize
-    , stack_size        = _StackSize
-    , message_queue_len = _MsgQueueLen
-    }
-) ->
-    ToSingleton       = fun (X) -> [X] end,
-    InitCallOTPOpt2   = hope_option:map(InitCallOTPOpt1, ?TAG(otp_initial_call)),
-    AncestorsOpt2     = hope_option:map(AncestorsOpt1  , ?TAG(otp_ancestors)),
-    InitCallOTPOpt3   = hope_option:map(InitCallOTPOpt2, ToSingleton),
-    AncestorsOpt3     = hope_option:map(AncestorsOpt2  , ToSingleton),
-    MaybeInitCallOTP  = hope_option:get(InitCallOTPOpt3, []),
-    MaybeAncestors    = hope_option:get(AncestorsOpt3  , []),
-    Ancestry =
-        [{raw_initial_call, InitCallRaw}] ++
-        MaybeInitCallOTP ++
-        MaybeAncestors,
+get_best_known_origin(?T{registered_name=none, ancestry=Ancestry}) ->
     {ancestry, Ancestry}.
