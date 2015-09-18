@@ -36,6 +36,10 @@ Essentially like `folsomite`, but different. Different in the following ways:
           , {dst_port             , 8125}
           , {src_port             , 8124}
           , {num_msgs_per_packet  , 10}
+
+          % If you want to name your node something other than what
+          % erlang:node() returns:
+          , {static_node_name     , <<"unicorn_at_rainbow">>}
           ]}
       , {beam_stats_consumer_graphite,
           [ {consumption_interval , 60000}

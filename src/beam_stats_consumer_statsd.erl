@@ -26,6 +26,7 @@
     | {dst_port             , inet:port_number()}
     | {src_port             , inet:port_number()}
     | {num_msgs_per_packet  , non_neg_integer()}
+    | {static_node_name     , binary()}
     .
 
 -define(DEFAULT_DST_HOST, "localhost").
@@ -51,6 +52,7 @@
     , dst_port :: inet:port_number()
     , src_port :: inet:port_number()
     , num_msgs_per_packet :: non_neg_integer()
+    , static_node_name    :: hope_option:t(binary())
     }).
 
 -type state() ::
@@ -70,19 +72,27 @@ init(Options) ->
     DstPort = hope_kv_list:get(Options, dst_port, ?DEFAULT_DST_PORT),
     SrcPort = hope_kv_list:get(Options, src_port, ?DEFAULT_SRC_PORT),
     NumMsgsPerPacket = hope_kv_list:get(Options, num_msgs_per_packet, 10),
+    StaticNodeNameOpt = hope_kv_list:get(Options, static_node_name),
     State = #state
         { sock     = none
         , dst_host = DstHost
         , dst_port = DstPort
         , src_port = SrcPort
         , num_msgs_per_packet = NumMsgsPerPacket
+        , static_node_name    = StaticNodeNameOpt
         },
     {ConsumptionInterval, State}.
 
 -spec consume(beam_stats_consumer:queue(), state()) ->
     state().
-consume(Q, #state{num_msgs_per_packet=NumMsgsPerPacket}=State) ->
-    Packets = beam_stats_queue_to_packets(Q, NumMsgsPerPacket),
+consume(
+    Q,
+    #state
+    { num_msgs_per_packet = NumMsgsPerPacket
+    , static_node_name    = StaticNodeNameOpt
+    }=State
+) ->
+    Packets = beam_stats_queue_to_packets(Q, NumMsgsPerPacket, StaticNodeNameOpt),
     lists:foldl(fun try_to_connect_and_send/2, State, Packets).
 
 -spec terminate(state()) ->
@@ -145,14 +155,18 @@ try_to_connect_if_no_socket(#state{sock=none, src_port=SrcPort}=State) ->
 %% Serialization
 %% ============================================================================
 
--spec beam_stats_queue_to_packets(beam_stats_consumer:queue(), non_neg_integer()) ->
+-spec beam_stats_queue_to_packets(
+    beam_stats_consumer:queue(),
+    non_neg_integer(),
+    hope_option:t(binary())
+) ->
     [binary()].
-beam_stats_queue_to_packets(Q, NumMsgsPerPacket) ->
-    MsgBins = lists:append([beam_stats_to_bins(B) || B <- queue:to_list(Q)]),
+beam_stats_queue_to_packets(Q, NumMsgsPerPacket, StaticNodeNameOpt) ->
+    MsgBins = lists:append([beam_stats_to_bins(B, StaticNodeNameOpt) || B <- queue:to_list(Q)]),
     MsgBinsChucks = hope_list:divide(MsgBins, NumMsgsPerPacket),
     lists:map(fun erlang:iolist_to_binary/1, MsgBinsChucks).
 
--spec beam_stats_to_bins(beam_stats:t()) ->
+-spec beam_stats_to_bins(beam_stats:t(), hope_option:t(binary())) ->
     [binary()].
 beam_stats_to_bins(#beam_stats
     { node_id = NodeID
@@ -164,9 +178,10 @@ beam_stats_to_bins(#beam_stats
     , run_queue        = RunQueue
     , ets              = ETS
     , processes        = Processes
-    }
+    },
+    StaticNodeNameOpt
 ) ->
-    NodeIDBin = node_id_to_bin(NodeID),
+    NodeIDBin = hope_option:get(StaticNodeNameOpt, node_id_to_bin(NodeID)),
     Msgs1 =
         [ io_bytes_in_to_msg(IOBytesIn)
         , io_bytes_out_to_msg(IOBytesOut)
