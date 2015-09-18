@@ -1,6 +1,8 @@
 -module(beam_stats_state).
 
 -include("include/beam_stats.hrl").
+-include("include/beam_stats_process.hrl").
+-include("include/beam_stats_processes.hrl").
 
 -export_type(
     [ t/0
@@ -14,6 +16,7 @@
 
 -record(snapshots,
     { memory     :: [{atom(), non_neg_integer()}]
+    , processes  :: beam_stats_processes:t()
     , run_queue  :: non_neg_integer()
     , ets        :: beam_stats_ets:t()
     }).
@@ -83,6 +86,7 @@ export(
     , snapshots =
         #snapshots
         { memory    = Memory
+        , processes = Processes
         , run_queue = RunQueue
         , ets       = ETS
         }
@@ -114,11 +118,13 @@ export(
     , reductions       = Reductions
     , run_queue        = RunQueue
     , ets              = ETS
+    , processes        = Processes
     }.
 
 snapshots_new() ->
     #snapshots
     { memory     = erlang:memory()
+    , processes  = beam_stats_processes:collect()
     , run_queue  = erlang:statistics(run_queue)
     , ets        = beam_stats_ets:collect()
     }.

@@ -2,6 +2,9 @@
 
 -include("include/beam_stats.hrl").
 -include("include/beam_stats_ets_table.hrl").
+-include("include/beam_stats_process.hrl").
+-include("include/beam_stats_process_ancestry.hrl").
+-include("include/beam_stats_processes.hrl").
 -include("beam_stats_logging.hrl").
 
 -behaviour(beam_stats_consumer).
@@ -160,6 +163,7 @@ beam_stats_to_bins(#beam_stats
     , reductions       = Reductions
     , run_queue        = RunQueue
     , ets              = ETS
+    , processes        = Processes
     }
 ) ->
     NodeIDBin = node_id_to_bin(NodeID),
@@ -171,7 +175,8 @@ beam_stats_to_bins(#beam_stats
         , run_queue_to_msg(RunQueue)
         | memory_to_msgs(Memory)
         ]
-        ++ ets_to_msgs(ETS),
+        ++ ets_to_msgs(ETS)
+        ++ procs_to_msgs(Processes),
     Msgs2 = [statsd_msg_add_name_prefix(M, NodeIDBin) || M <- Msgs1],
     [statsd_msg_to_bin(M) || M <- Msgs2].
 
@@ -217,6 +222,115 @@ io_bytes_out_to_msg(IOBytesOut) ->
     #statsd_msg
     { name  = <<"io.bytes_out">>
     , value = IOBytesOut
+    , type  = gauge
+    }.
+
+-spec procs_to_msgs(beam_stats_processes:t()) ->
+    [statsd_msg()].
+procs_to_msgs(
+    #beam_stats_processes
+    { individual_stats         = Procs
+    , count_all                = CountAll
+    , count_exiting            = CountExiting
+    , count_garbage_collecting = CountGarbageCollecting
+    , count_registered         = CountRegistered
+    , count_runnable           = CountRunnable
+    , count_running            = CountRunning
+    , count_suspended          = CountSuspended
+    , count_waiting            = CountWaiting
+    }
+) ->
+    [ gauge(<<"processes_count_all">>               , CountAll)
+    , gauge(<<"processes_count_exiting">>           , CountExiting)
+    , gauge(<<"processes_count_garbage_collecting">>, CountGarbageCollecting)
+    , gauge(<<"processes_count_registered">>        , CountRegistered)
+    , gauge(<<"processes_count_runnable">>          , CountRunnable)
+    , gauge(<<"processes_count_running">>           , CountRunning)
+    , gauge(<<"processes_count_suspended">>         , CountSuspended)
+    , gauge(<<"processes_count_waiting">>           , CountWaiting)
+    | lists:append([proc_to_msgs(P) || P <- Procs])
+    ].
+
+-spec proc_to_msgs(beam_stats_process:t()) ->
+    [statsd_msg()].
+proc_to_msgs(
+    #beam_stats_process
+    { pid               = Pid
+    , memory            = Memory
+    , total_heap_size   = TotalHeapSize
+    , stack_size        = StackSize
+    , message_queue_len = MsgQueueLen
+    }=Process
+) ->
+    Origin = beam_stats_process:get_best_known_origin(Process),
+    OriginBin = proc_origin_to_bin(Origin),
+    PidBin = pid_to_bin(Pid),
+    OriginDotPid = <<OriginBin/binary, ".", PidBin/binary>>,
+    [ gauge(<<"process_memory."            , OriginDotPid/binary>>, Memory)
+    , gauge(<<"process_total_heap_size."   , OriginDotPid/binary>>, TotalHeapSize)
+    , gauge(<<"process_stack_size."        , OriginDotPid/binary>>, StackSize)
+    , gauge(<<"process_message_queue_len." , OriginDotPid/binary>>, MsgQueueLen)
+    ].
+
+-spec proc_origin_to_bin(beam_stats_process:best_known_origin()) ->
+    binary().
+proc_origin_to_bin({registered_name, Name}) ->
+    atom_to_binary(Name, utf8);
+proc_origin_to_bin({ancestry, Ancestry}) ->
+    #beam_stats_process_ancestry
+    { raw_initial_call  = InitCallRaw
+    , otp_initial_call  = InitCallOTPOpt
+    , otp_ancestors     = AncestorsOpt
+    } = Ancestry,
+    Blank             = <<"NONE">>,
+    InitCallOTPBinOpt = hope_option:map(InitCallOTPOpt   , fun mfa_to_bin/1),
+    InitCallOTPBin    = hope_option:get(InitCallOTPBinOpt, Blank),
+    AncestorsBinOpt   = hope_option:map(AncestorsOpt     , fun ancestors_to_bin/1),
+    AncestorsBin      = hope_option:get(AncestorsBinOpt  , Blank),
+    InitCallRawBin    = mfa_to_bin(InitCallRaw),
+    << InitCallRawBin/binary
+     , "--"
+     , InitCallOTPBin/binary
+     , "--"
+     , AncestorsBin/binary
+    >>.
+
+ancestors_to_bin([]) ->
+    <<>>;
+ancestors_to_bin([A | Ancestors]) ->
+    ABin = ancestor_to_bin(A),
+    case ancestors_to_bin(Ancestors)
+    of  <<>> ->
+            ABin
+    ;   <<AncestorsBin/binary>> ->
+            <<ABin/binary, "-", AncestorsBin/binary>>
+    end.
+
+ancestor_to_bin(A) when is_atom(A) ->
+    atom_to_binary(A, utf8);
+ancestor_to_bin(A) when is_pid(A) ->
+    pid_to_bin(A).
+
+pid_to_bin(Pid) ->
+    PidList = erlang:pid_to_list(Pid),
+    PidBin = re:replace(PidList, "[\.]", "_", [global, {return, binary}]),
+             re:replace(PidBin , "[><]", "" , [global, {return, binary}]).
+
+-spec mfa_to_bin(mfa()) ->
+    binary().
+mfa_to_bin({Module, Function, Arity}) ->
+    ModuleBin   = atom_to_binary(Module  , utf8),
+    FunctionBin = atom_to_binary(Function, utf8),
+    ArityBin    = erlang:integer_to_binary(Arity),
+    <<ModuleBin/binary, "-", FunctionBin/binary, "-", ArityBin/binary>>.
+
+
+-spec gauge(binary(), integer()) ->
+    statsd_msg().
+gauge(<<Name/binary>>, Value) when is_integer(Value) ->
+    #statsd_msg
+    { name  = Name
+    , value = Value
     , type  = gauge
     }.
 
