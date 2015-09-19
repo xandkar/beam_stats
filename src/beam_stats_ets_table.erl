@@ -26,13 +26,13 @@
 -spec of_id(id()) ->
     t().
 of_id(ID) ->
-    WordSize      = erlang:system_info(wordsize),
-    NumberOfWords = ets:info(ID, memory),
+    WordSize      = beam_stats_source:erlang_system_info(wordsize),
+    NumberOfWords = beam_stats_source:ets_info(ID, memory),
     NumberOfBytes = NumberOfWords * WordSize,
     #?MODULE
     { id     = ID
-    , name   = ets:info(ID, name)
-    , size   = ets:info(ID, size)
+    , name   = beam_stats_source:ets_info(ID, name)
+    , size   = beam_stats_source:ets_info(ID, size)
     , memory = NumberOfBytes
     }.
 
