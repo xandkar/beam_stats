@@ -64,8 +64,8 @@ new() ->
     t().
 new(#totals{}=TotalsPrevious) ->
     ?T
-    { timestamp       = os:timestamp()
-    , node_id         = erlang:node()
+    { timestamp       = beam_stats_source:os_timestamp()
+    , node_id         = beam_stats_source:erlang_node()
     , snapshots       = snapshots_new()
     , deltas          = deltas_new()
     , totals_previous = TotalsPrevious
@@ -123,14 +123,14 @@ export(
 
 snapshots_new() ->
     #snapshots
-    { memory     = erlang:memory()
+    { memory     = beam_stats_source:erlang_memory()
     , processes  = beam_stats_processes:collect()
-    , run_queue  = erlang:statistics(run_queue)
+    , run_queue  = beam_stats_source:erlang_statistics(run_queue)
     , ets        = beam_stats_ets:collect()
     }.
 
 deltas_new() ->
-    {_ReductionsTotal, ReductionsDelta} = erlang:statistics(reductions),
+    {_ReductionsTotal, ReductionsDelta} = beam_stats_source:erlang_statistics(reductions),
     #deltas
     { reductions = ReductionsDelta
     }.
@@ -138,8 +138,8 @@ deltas_new() ->
 totals_new() ->
     { {input  , IOBytesIn}
     , {output , IOBytesOut}
-    } = erlang:statistics(io),
-    {ContextSwitches, 0} = erlang:statistics(context_switches),
+    } = beam_stats_source:erlang_statistics(io),
+    {ContextSwitches, 0} = beam_stats_source:erlang_statistics(context_switches),
     #totals
     { io_bytes_in      = IOBytesIn
     , io_bytes_out     = IOBytesOut

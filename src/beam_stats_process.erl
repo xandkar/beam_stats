@@ -119,7 +119,7 @@ pid_info_exn(Pid, Key) ->
     Value.
 
 pid_info_opt(Pid, Key) ->
-    case {Key, erlang:process_info(Pid, Key)}
+    case {Key, beam_stats_source:erlang_process_info(Pid, Key)}
     of  {registered_name, []}           -> none
     ;   {_              , {Key, Value}} -> {some, Value}
     end.

@@ -21,7 +21,8 @@
 -spec collect() ->
     t().
 collect() ->
-    Ps = [beam_stats_process:of_pid(P) || P <- erlang:processes()],
+    Pids = beam_stats_source:erlang_processes(),
+    Ps = [beam_stats_process:of_pid(P) || P <- Pids],
     ?T
     { individual_stats
         = Ps
@@ -32,7 +33,7 @@ collect() ->
     , count_garbage_collecting
         = length([P || P <- Ps, P#beam_stats_process.status =:= garbage_collecting])
     , count_registered
-        = length(registered())
+        = length(beam_stats_source:erlang_registered())
     , count_runnable
         = length([P || P <- Ps, P#beam_stats_process.status =:= runnable])
     , count_running

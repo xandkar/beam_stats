@@ -14,4 +14,5 @@
 -spec collect() ->
     t().
 collect() ->
-    lists:map(fun beam_stats_ets_table:of_id/1, ets:all()).
+    TableIDs = beam_stats_source:ets_all(),
+    lists:map(fun beam_stats_ets_table:of_id/1, TableIDs).
