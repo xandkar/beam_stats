@@ -22,7 +22,8 @@
     t().
 collect() ->
     Pids = beam_stats_source:erlang_processes(),
-    Ps = [beam_stats_process:of_pid(P) || P <- Pids],
+    PsOpts = [beam_stats_process:of_pid(P) || P <- Pids],
+    Ps = [P || {some, P} <- PsOpts],
     ?T
     { individual_stats
         = Ps

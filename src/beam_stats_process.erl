@@ -43,25 +43,33 @@
 %% ============================================================================
 
 -spec of_pid(pid()) ->
-    t().
+      none        % when process is dead
+    | {some, t()} % when process is alive
+    .
 of_pid(Pid) ->
-    Dict = pid_info_exn(Pid, dictionary),
-    Ancestry =
-        #beam_stats_process_ancestry
-        { raw_initial_call  = pid_info_exn(Pid, initial_call)
-        , otp_initial_call  = hope_kv_list:get(Dict, '$initial_call')
-        , otp_ancestors     = hope_kv_list:get(Dict, '$ancestors')
-        },
-    ?T
-    { pid               = Pid
-    , registered_name   = pid_info_opt(Pid, registered_name)
-    , ancestry          = Ancestry
-    , status            = pid_info_exn(Pid, status)
-    , memory            = pid_info_exn(Pid, memory)
-    , total_heap_size   = pid_info_exn(Pid, total_heap_size)
-    , stack_size        = pid_info_exn(Pid, stack_size)
-    , message_queue_len = pid_info_exn(Pid, message_queue_len)
-    }.
+    try
+        Dict = pid_info_exn(Pid, dictionary),
+        Ancestry =
+            #beam_stats_process_ancestry
+            { raw_initial_call  = pid_info_exn(Pid, initial_call)
+            , otp_initial_call  = hope_kv_list:get(Dict, '$initial_call')
+            , otp_ancestors     = hope_kv_list:get(Dict, '$ancestors')
+            },
+        T =
+            ?T
+            { pid               = Pid
+            , registered_name   = pid_info_opt(Pid, registered_name)
+            , ancestry          = Ancestry
+            , status            = pid_info_exn(Pid, status)
+            , memory            = pid_info_exn(Pid, memory)
+            , total_heap_size   = pid_info_exn(Pid, total_heap_size)
+            , stack_size        = pid_info_exn(Pid, stack_size)
+            , message_queue_len = pid_info_exn(Pid, message_queue_len)
+            },
+        {some, T}
+    catch throw:{process_dead, _} ->
+        none
+    end.
 
 -spec print(t()) ->
     ok.
@@ -122,6 +130,7 @@ pid_info_opt(Pid, Key) ->
     case {Key, beam_stats_source:erlang_process_info(Pid, Key)}
     of  {registered_name, []}           -> none
     ;   {_              , {Key, Value}} -> {some, Value}
+    ;   {_              , undefined}    -> throw({process_dead, Pid})
     end.
 
 %% ============================================================================
