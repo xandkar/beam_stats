@@ -89,10 +89,11 @@ consume_async(PID, #beam_stats{}=BEAMStats) ->
 %% ============================================================================
 
 start_link(ConsumerModule, ConsumerOptions) ->
+    RegisteredName  = ConsumerModule,
     GenServerModule = ?MODULE,
     GenServerOpts   = [],
     InitArgs        = [ConsumerModule, ConsumerOptions],
-    gen_server:start_link(GenServerModule, InitArgs, GenServerOpts).
+    gen_server:start_link({local, RegisteredName}, GenServerModule, InitArgs, GenServerOpts).
 
 %% ============================================================================
 %%  gen_server callbacks (unused)
