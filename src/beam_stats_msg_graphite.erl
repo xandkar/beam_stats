@@ -56,11 +56,7 @@ of_memory(Memory, <<NodeID/binary>>, Timestamp) ->
     ComponentToMessage =
         fun ({Key, Value}) ->
             KeyBin = atom_to_binary(Key, latin1),
-            ?T
-            { path      = [NodeID, <<"memory">>, KeyBin]
-            , value     = Value
-            , timestamp = Timestamp
-            }
+            cons([NodeID, <<"memory">>, KeyBin], Value, Timestamp)
         end,
     lists:map(ComponentToMessage, Memory).
 
