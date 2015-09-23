@@ -3,6 +3,9 @@
 -include("include/beam_stats.hrl").
 -include("include/beam_stats_ets_table.hrl").
 -include("include/beam_stats_msg_graphite.hrl").
+-include("include/beam_stats_process.hrl").
+-include("include/beam_stats_process_ancestry.hrl").
+-include("include/beam_stats_processes.hrl").
 
 -export_type(
     [ t/0
@@ -37,7 +40,7 @@ of_beam_stats(#beam_stats
     , reductions       = Reductions
     , run_queue        = RunQueue
     , ets              = ETS
-    , processes        = _Processes
+    , processes        = Processes
     },
     <<NodeID/binary>>
 ) ->
@@ -51,7 +54,7 @@ of_beam_stats(#beam_stats
     | of_memory(Memory, NodeID, Ts)
     ]
     ++ of_ets(ETS, NodeID, Ts)
-    .
+    ++ of_processes(Processes, NodeID, Ts).
 
 -spec of_memory([{atom(), non_neg_integer()}], binary(), erlang:timestamp()) ->
     [t()].
@@ -87,6 +90,116 @@ of_ets_table(#beam_stats_ets_table
     [ cons([NodeID, <<"ets_table">>, <<"size">>   | NameAndID], Size  , Timestamp)
     , cons([NodeID, <<"ets_table">>, <<"memory">> | NameAndID], Memory, Timestamp)
     ].
+
+-spec of_processes(beam_stats_processes:t(), binary(), erlang:timestamp()) ->
+    [t()].
+of_processes(
+    #beam_stats_processes
+    { individual_stats         = Processes
+    , count_all                = CountAll
+    , count_exiting            = CountExiting
+    , count_garbage_collecting = CountGarbageCollecting
+    , count_registered         = CountRegistered
+    , count_runnable           = CountRunnable
+    , count_running            = CountRunning
+    , count_suspended          = CountSuspended
+    , count_waiting            = CountWaiting
+    },
+    <<NodeID/binary>>,
+    Timestamp
+) ->
+    OfProcess = fun (P) -> of_process(P, NodeID, Timestamp) end,
+    PerProcessMsgsNested = lists:map(OfProcess, Processes),
+    PerProcessMsgsFlattened = lists:append(PerProcessMsgsNested),
+    Ts = Timestamp,
+    N  = NodeID,
+    [ cons([N, <<"processes_count_all">>               ], CountAll              , Ts)
+    , cons([N, <<"processes_count_exiting">>           ], CountExiting          , Ts)
+    , cons([N, <<"processes_count_garbage_collecting">>], CountGarbageCollecting, Ts)
+    , cons([N, <<"processes_count_registered">>        ], CountRegistered       , Ts)
+    , cons([N, <<"processes_count_runnable">>          ], CountRunnable         , Ts)
+    , cons([N, <<"processes_count_running">>           ], CountRunning          , Ts)
+    , cons([N, <<"processes_count_suspended">>         ], CountSuspended        , Ts)
+    , cons([N, <<"processes_count_waiting">>           ], CountWaiting          , Ts)
+    | PerProcessMsgsFlattened
+    ].
+
+-spec of_process(beam_stats_process:t(), binary(), erlang:timestamp()) ->
+    [t()].
+of_process(
+    #beam_stats_process
+    { pid               = Pid
+    , memory            = Memory
+    , total_heap_size   = TotalHeapSize
+    , stack_size        = StackSize
+    , message_queue_len = MsgQueueLen
+    }=Process,
+    <<NodeID/binary>>,
+    Timestamp
+) ->
+    Origin = beam_stats_process:get_best_known_origin(Process),
+    OriginBin = proc_origin_to_bin(Origin),
+    PidBin = pid_to_bin(Pid),
+    OriginAndPid = [OriginBin, PidBin],
+    Ts = Timestamp,
+    N  = NodeID,
+    [ cons([N, <<"process_memory">>            , OriginAndPid], Memory        , Ts)
+    , cons([N, <<"process_total_heap_size">>   , OriginAndPid], TotalHeapSize , Ts)
+    , cons([N, <<"process_stack_size">>        , OriginAndPid], StackSize     , Ts)
+    , cons([N, <<"process_message_queue_len">> , OriginAndPid], MsgQueueLen   , Ts)
+    ].
+
+-spec proc_origin_to_bin(beam_stats_process:best_known_origin()) ->
+    binary().
+proc_origin_to_bin({registered_name, Name}) ->
+    atom_to_binary(Name, utf8);
+proc_origin_to_bin({ancestry, Ancestry}) ->
+    #beam_stats_process_ancestry
+    { raw_initial_call  = InitCallRaw
+    , otp_initial_call  = InitCallOTPOpt
+    , otp_ancestors     = AncestorsOpt
+    } = Ancestry,
+    Blank             = <<"NONE">>,
+    InitCallOTPBinOpt = hope_option:map(InitCallOTPOpt   , fun mfa_to_bin/1),
+    InitCallOTPBin    = hope_option:get(InitCallOTPBinOpt, Blank),
+    AncestorsBinOpt   = hope_option:map(AncestorsOpt     , fun ancestors_to_bin/1),
+    AncestorsBin      = hope_option:get(AncestorsBinOpt  , Blank),
+    InitCallRawBin    = mfa_to_bin(InitCallRaw),
+    << InitCallRawBin/binary
+     , "--"
+     , InitCallOTPBin/binary
+     , "--"
+     , AncestorsBin/binary
+    >>.
+
+ancestors_to_bin([]) ->
+    <<>>;
+ancestors_to_bin([A | Ancestors]) ->
+    ABin = ancestor_to_bin(A),
+    case ancestors_to_bin(Ancestors)
+    of  <<>> ->
+            ABin
+    ;   <<AncestorsBin/binary>> ->
+            <<ABin/binary, "-", AncestorsBin/binary>>
+    end.
+
+ancestor_to_bin(A) when is_atom(A) ->
+    atom_to_binary(A, utf8);
+ancestor_to_bin(A) when is_pid(A) ->
+    pid_to_bin(A).
+
+pid_to_bin(Pid) ->
+    PidList = erlang:pid_to_list(Pid),
+    PidBin = re:replace(PidList, "[\.]", "_", [global, {return, binary}]),
+             re:replace(PidBin , "[><]", "" , [global, {return, binary}]).
+
+-spec mfa_to_bin(mfa()) ->
+    binary().
+mfa_to_bin({Module, Function, Arity}) ->
+    ModuleBin   = atom_to_binary(Module  , utf8),
+    FunctionBin = atom_to_binary(Function, utf8),
+    ArityBin    = erlang:integer_to_binary(Arity),
+    <<ModuleBin/binary, "-", FunctionBin/binary, "-", ArityBin/binary>>.
 
 -spec cons([binary()], integer(), erlang:timestamp()) ->
     t().
