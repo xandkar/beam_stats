@@ -13,13 +13,17 @@
 
 -export(
     [ of_beam_stats/1
-    %, to_bin/1
+    , to_bin/1
     ]).
 
 -define(T, #?MODULE).
 
 -type t() ::
     ?T{}.
+
+%% ============================================================================
+%% API
+%% ============================================================================
 
 -spec of_beam_stats(beam_stats:t()) ->
     [t()].
@@ -55,6 +59,38 @@ of_beam_stats(#beam_stats
     ]
     ++ of_ets(ETS, NodeID, Ts)
     ++ of_processes(Processes, NodeID, Ts).
+
+-spec to_bin(t()) ->
+    binary().
+to_bin(
+    ?T
+    { path      = Path
+    , value     = Value
+    , timestamp = Timestamp
+    }
+) ->
+    PathBin = bin_join(Path, <<".">>),
+    ValueBin = integer_to_binary(Value),
+    TimestampInt = timestamp_to_integer(Timestamp),
+    TimestampBin = integer_to_binary(TimestampInt),
+    <<PathBin/binary, " ", ValueBin/binary, " ", TimestampBin/binary>>.
+
+%% ============================================================================
+%% Helpers
+%% ============================================================================
+
+-spec bin_join([binary()], binary()) ->
+    binary().
+bin_join([]                         , <<_/binary>>  ) -> <<>>;
+bin_join([<<B/binary>> | []]        , <<_/binary>>  ) -> B;
+bin_join([<<B/binary>> | [_|_]=Bins], <<Sep/binary>>) ->
+    BinsBin = bin_join(Bins, Sep),
+    <<B/binary, Sep/binary, BinsBin/binary>>.
+
+-spec timestamp_to_integer(erlang:timestamp()) ->
+    non_neg_integer().
+timestamp_to_integer({Megaseconds, Seconds, _}) ->
+    Megaseconds * 1000000 + Seconds.
 
 -spec of_memory([{atom(), non_neg_integer()}], binary(), erlang:timestamp()) ->
     [t()].
