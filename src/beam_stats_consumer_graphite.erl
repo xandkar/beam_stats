@@ -32,7 +32,7 @@
 -type state() ::
     #state{}.
 
--define(GRAPHITE_PATH_PREFIX, "beam_stats").
+-define(PATH_PREFIX         , <<"beam_stats">>).
 -define(DEFAULT_HOST        , "localhost").
 -define(DEFAULT_PORT        , 2003).
 -define(DEFAULT_TIMEOUT     , 5000).
@@ -109,59 +109,14 @@ try_to_connect_if_no_socket(
 -spec beam_stats_queue_to_binary(beam_stats_consumer:queue()) ->
     binary().
 beam_stats_queue_to_binary(Q) ->
-    Bins = [beam_stats_to_bin(B) || B <- queue:to_list(Q)],
+    Bins = [beam_stats_to_bins(B) || B <- queue:to_list(Q)],
     iolist_to_binary(Bins).
 
--spec beam_stats_to_bin(beam_stats:t()) ->
-    binary().
-beam_stats_to_bin(#beam_stats
-    { timestamp = Timestamp
-    , node_id   = NodeID
-    , memory    = Memory
-    }
-) ->
-    TimestampInt = timestamp_to_integer(Timestamp),
-    TimestampBin = integer_to_binary(TimestampInt),
-    <<NodeIDBin/binary>> = node_id_to_bin(NodeID),
-    MemoryPairToBin = make_pair_to_bin(NodeIDBin, TimestampBin, <<"memory">>),
-    MemoryBinPairs = lists:map(fun atom_int_to_bin_bin/1, Memory),
-    MemoryBins     = lists:map(MemoryPairToBin, MemoryBinPairs),
-    AllBins =
-        [ MemoryBins
-        ],
-    iolist_to_binary(AllBins).
-
--spec timestamp_to_integer(erlang:timestamp()) ->
-    non_neg_integer().
-timestamp_to_integer({Megaseconds, Seconds, _}) ->
-    Megaseconds * 1000000 + Seconds.
-
--spec make_pair_to_bin(binary(), binary(), binary()) ->
-    fun(({binary(), binary()}) -> binary()).
-make_pair_to_bin(<<NodeID/binary>>, <<TimestampBin/binary>>, <<Type/binary>>) ->
-    fun ({<<K/binary>>, <<V/binary>>}) ->
-        << ?GRAPHITE_PATH_PREFIX
-         , "."
-         , NodeID/binary
-         , "."
-         , Type/binary
-         , "."
-         , K/binary
-         , " "
-         , V/binary
-         , " "
-         , TimestampBin/binary
-         , "\n"
-        >>
-    end.
-
--spec node_id_to_bin(node()) ->
-    binary().
-node_id_to_bin(NodeID) ->
-    NodeIDBin = atom_to_binary(NodeID, utf8),
-    re:replace(NodeIDBin, "[\@\.]", "_", [global, {return, binary}]).
-
--spec atom_int_to_bin_bin({atom(), integer()}) ->
-    {binary(), binary()}.
-atom_int_to_bin_bin({K, V}) ->
-    {atom_to_binary(K, latin1), integer_to_binary(V)}.
+-spec beam_stats_to_bins(beam_stats:t()) ->
+    [binary()].
+beam_stats_to_bins(#beam_stats{}=BeamStats) ->
+    MsgAddPrefix =
+        fun (M) -> beam_stats_msg_graphite:add_path_prefix(M, ?PATH_PREFIX) end,
+    Msgs1 = beam_stats_msg_graphite:of_beam_stats(BeamStats),
+    Msgs2 = lists:map(MsgAddPrefix, Msgs1),
+    lists:map(fun beam_stats_msg_graphite:to_bin/1, Msgs2).
