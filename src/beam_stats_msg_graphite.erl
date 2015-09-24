@@ -185,10 +185,10 @@ of_process(
     OriginAndPid = [OriginBin, PidBin],
     Ts = Timestamp,
     N  = NodeID,
-    [ cons([N, <<"process_memory">>            , OriginAndPid], Memory        , Ts)
-    , cons([N, <<"process_total_heap_size">>   , OriginAndPid], TotalHeapSize , Ts)
-    , cons([N, <<"process_stack_size">>        , OriginAndPid], StackSize     , Ts)
-    , cons([N, <<"process_message_queue_len">> , OriginAndPid], MsgQueueLen   , Ts)
+    [ cons([N, <<"process_memory">>            | OriginAndPid], Memory        , Ts)
+    , cons([N, <<"process_total_heap_size">>   | OriginAndPid], TotalHeapSize , Ts)
+    , cons([N, <<"process_stack_size">>        | OriginAndPid], StackSize     , Ts)
+    , cons([N, <<"process_message_queue_len">> | OriginAndPid], MsgQueueLen   , Ts)
     ].
 
 -spec proc_origin_to_bin(beam_stats_process:best_known_origin()) ->
