@@ -14,6 +14,7 @@
 -export(
     [ of_beam_stats/1
     , to_bin/1
+    , path_to_bin/1
     ]).
 
 -define(T, #?MODULE).
@@ -69,11 +70,16 @@ to_bin(
     , timestamp = Timestamp
     }
 ) ->
-    PathBin = bin_join(Path, <<".">>),
+    PathBin = path_to_bin(Path),
     ValueBin = integer_to_binary(Value),
     TimestampInt = timestamp_to_integer(Timestamp),
     TimestampBin = integer_to_binary(TimestampInt),
     <<PathBin/binary, " ", ValueBin/binary, " ", TimestampBin/binary>>.
+
+-spec path_to_bin([binary()]) ->
+    binary().
+path_to_bin(Path) ->
+    bin_join(Path, <<".">>).
 
 %% ============================================================================
 %% Helpers
