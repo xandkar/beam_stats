@@ -166,6 +166,7 @@ of_processes(
     OfProcess = fun (P) -> of_process(P, NodeID, Timestamp) end,
     PerProcessMsgsNested = lists:map(OfProcess, Processes),
     PerProcessMsgsFlattened = lists:append(PerProcessMsgsNested),
+    PerProcessMsgsAggregates = aggregate_by_path(PerProcessMsgsFlattened, Timestamp),
     Ts = Timestamp,
     N  = NodeID,
     [ cons([N, <<"processes_count_all">>               ], CountAll              , Ts)
@@ -176,14 +177,14 @@ of_processes(
     , cons([N, <<"processes_count_running">>           ], CountRunning          , Ts)
     , cons([N, <<"processes_count_suspended">>         ], CountSuspended        , Ts)
     , cons([N, <<"processes_count_waiting">>           ], CountWaiting          , Ts)
-    | PerProcessMsgsFlattened
+    | PerProcessMsgsAggregates
     ].
 
 -spec of_process(beam_stats_process:t(), binary(), erlang:timestamp()) ->
     [t()].
 of_process(
     #beam_stats_process
-    { pid               = Pid
+    { pid               = _
     , memory            = Memory
     , total_heap_size   = TotalHeapSize
     , stack_size        = StackSize
@@ -194,20 +195,30 @@ of_process(
 ) ->
     Origin = beam_stats_process:get_best_known_origin(Process),
     OriginBin = proc_origin_to_bin(Origin),
-    PidBin = pid_to_bin(Pid),
-    OriginAndPid = [OriginBin, PidBin],
     Ts = Timestamp,
     N  = NodeID,
-    [ cons([N, <<"process_memory">>            | OriginAndPid], Memory        , Ts)
-    , cons([N, <<"process_total_heap_size">>   | OriginAndPid], TotalHeapSize , Ts)
-    , cons([N, <<"process_stack_size">>        | OriginAndPid], StackSize     , Ts)
-    , cons([N, <<"process_message_queue_len">> | OriginAndPid], MsgQueueLen   , Ts)
+    [ cons([N, <<"process_memory">>            , OriginBin], Memory        , Ts)
+    , cons([N, <<"process_total_heap_size">>   , OriginBin], TotalHeapSize , Ts)
+    , cons([N, <<"process_stack_size">>        , OriginBin], StackSize     , Ts)
+    , cons([N, <<"process_message_queue_len">> , OriginBin], MsgQueueLen   , Ts)
     ].
+
+-spec aggregate_by_path([t()], erlang:timestamp()) ->
+    [t()].
+aggregate_by_path(Msgs, Timestamp) ->
+    Aggregate =
+        fun (?T{path=K, value=V}, ValsByPath) ->
+            dict:update_counter(K, V, ValsByPath)
+        end,
+    ValsByPathDict = lists:foldl(Aggregate, dict:new(), Msgs),
+    ValsByPathList = dict:to_list(ValsByPathDict),
+    [cons(Path, Value, Timestamp) || {Path, Value} <- ValsByPathList].
 
 -spec proc_origin_to_bin(beam_stats_process:best_known_origin()) ->
     binary().
 proc_origin_to_bin({registered_name, Name}) ->
-    atom_to_binary(Name, utf8);
+    NameBin = atom_to_binary(Name, utf8),
+    <<"named--", NameBin/binary>>;
 proc_origin_to_bin({ancestry, Ancestry}) ->
     #beam_stats_process_ancestry
     { raw_initial_call  = InitCallRaw
@@ -220,7 +231,8 @@ proc_origin_to_bin({ancestry, Ancestry}) ->
     AncestorsBinOpt   = hope_option:map(AncestorsOpt     , fun ancestors_to_bin/1),
     AncestorsBin      = hope_option:get(AncestorsBinOpt  , Blank),
     InitCallRawBin    = mfa_to_bin(InitCallRaw),
-    << InitCallRawBin/binary
+    << "spawned-via--"
+     , InitCallRawBin/binary
      , "--"
      , InitCallOTPBin/binary
      , "--"
