@@ -122,7 +122,7 @@ of_memory(Memory, <<NodeID/binary>>, Timestamp) ->
         end,
     lists:map(ComponentToMessage, Memory).
 
--spec of_ets(beam_stats_ets_table:t(), binary(), erlang:timestamp()) ->
+-spec of_ets(beam_stats_ets:t(), binary(), erlang:timestamp()) ->
     [t()].
 of_ets(PerTableStats, <<NodeID/binary>>, Timestamp) ->
     OfEtsTable = fun (Table) -> of_ets_table(Table, NodeID, Timestamp) end,
