@@ -13,8 +13,11 @@
 
 -export(
     [ of_beam_stats/1
+    , of_beam_stats/2
     , to_bin/1
     , path_to_bin/1
+    , add_path_prefix/2
+    , node_id_to_bin/1
     ]).
 
 -define(T, #?MODULE).
@@ -76,10 +79,21 @@ to_bin(
     TimestampBin = integer_to_binary(TimestampInt),
     <<PathBin/binary, " ", ValueBin/binary, " ", TimestampBin/binary>>.
 
+-spec add_path_prefix(t(), binary()) ->
+    t().
+add_path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
+    T?T{path = [Prefix | Path]}.
+
 -spec path_to_bin([binary()]) ->
     binary().
 path_to_bin(Path) ->
     bin_join(Path, <<".">>).
+
+-spec node_id_to_bin(node()) ->
+    binary().
+node_id_to_bin(NodeID) ->
+    NodeIDBin = atom_to_binary(NodeID, utf8),
+    re:replace(NodeIDBin, "[\@\.]", "_", [global, {return, binary}]).
 
 %% ============================================================================
 %% Helpers
@@ -251,9 +265,3 @@ cons(Path, Value, Timestamp) ->
     , value     = Value
     , timestamp = Timestamp
     }.
-
--spec node_id_to_bin(node()) ->
-    binary().
-node_id_to_bin(NodeID) ->
-    NodeIDBin = atom_to_binary(NodeID, utf8),
-    re:replace(NodeIDBin, "[\@\.]", "_", [global, {return, binary}]).
