@@ -253,12 +253,7 @@ ancestors_to_bin([A | Ancestors]) ->
 ancestor_to_bin(A) when is_atom(A) ->
     atom_to_binary(A, utf8);
 ancestor_to_bin(A) when is_pid(A) ->
-    pid_to_bin(A).
-
-pid_to_bin(Pid) ->
-    PidList = erlang:pid_to_list(Pid),
-    PidBin = re:replace(PidList, "[\.]", "_", [global, {return, binary}]),
-             re:replace(PidBin , "[><]", "" , [global, {return, binary}]).
+    <<"PID">>.
 
 -spec mfa_to_bin(mfa()) ->
     binary().
