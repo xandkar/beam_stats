@@ -41,7 +41,6 @@ of_beam_stats(#beam_stats
     { timestamp = Timestamp
     , node_id   = _
     , memory    = Memory
-    % TODO: Handle the rest of data points
     , io_bytes_in      = IOBytesIn
     , io_bytes_out     = IOBytesOut
     , context_switches = ContextSwitches
