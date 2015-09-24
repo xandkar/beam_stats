@@ -117,22 +117,22 @@ t_full_cycle(_Cfg) ->
         , <<"beam_stats.node_foo_host_bar.processes_count_waiting:0|g">>
 
         % Process 1
-        , <<"beam_stats.node_foo_host_bar.process_memory.reg_name_foo.0_1_0:15|g">>
-        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.reg_name_foo.0_1_0:25|g">>
-        , <<"beam_stats.node_foo_host_bar.process_stack_size.reg_name_foo.0_1_0:10|g">>
-        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.reg_name_foo.0_1_0:0|g">>
+        , <<"beam_stats.node_foo_host_bar.process_memory.named--reg_name_foo:15|g">>
+        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.named--reg_name_foo:25|g">>
+        , <<"beam_stats.node_foo_host_bar.process_stack_size.named--reg_name_foo:10|g">>
+        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.named--reg_name_foo:0|g">>
 
         % Process 2
-        , <<"beam_stats.node_foo_host_bar.process_memory.bar_mod-bar_fun-1--NONE--NONE.0_2_0:25|g">>
-        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.bar_mod-bar_fun-1--NONE--NONE.0_2_0:35|g">>
-        , <<"beam_stats.node_foo_host_bar.process_stack_size.bar_mod-bar_fun-1--NONE--NONE.0_2_0:40|g">>
-        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.bar_mod-bar_fun-1--NONE--NONE.0_2_0:5|g">>
+        , <<"beam_stats.node_foo_host_bar.process_memory.spawned-via--bar_mod-bar_fun-1--NONE--NONE:25|g">>
+        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:35|g">>
+        , <<"beam_stats.node_foo_host_bar.process_stack_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:40|g">>
+        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.spawned-via--bar_mod-bar_fun-1--NONE--NONE:5|g">>
 
         % Process 3
-        , <<"beam_stats.node_foo_host_bar.process_memory.baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0.0_3_0:25|g">>
-        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0.0_3_0:35|g">>
-        , <<"beam_stats.node_foo_host_bar.process_stack_size.baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0.0_3_0:40|g">>
-        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0.0_3_0:1|g">>
+        , <<"beam_stats.node_foo_host_bar.process_memory.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0:25|g">>
+        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0:35|g">>
+        , <<"beam_stats.node_foo_host_bar.process_stack_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0:40|g">>
+        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--0_0_0-0_1_0:1|g">>
         ],
     MsgsReceived = binary:split(PacketsCombined, <<"\n">>, [global, trim]),
     RemoveExpectedFromReceived =
