@@ -17,6 +17,8 @@
 -type t() ::
     ?T{}.
 
+-spec of_msg_graphite(beam_stats_msg_graphite:t()) ->
+    t().
 of_msg_graphite(
     #beam_stats_msg_graphite
     { path      = Path
