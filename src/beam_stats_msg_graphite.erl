@@ -136,8 +136,9 @@ of_memory(Memory, <<NodeID/binary>>, Timestamp) ->
     [t()].
 of_ets(PerTableStats, <<NodeID/binary>>, Timestamp) ->
     OfEtsTable = fun (Table) -> of_ets_table(Table, NodeID, Timestamp) end,
-    NestedMsgs = lists:map(OfEtsTable, PerTableStats),
-    lists:append(NestedMsgs).
+    MsgsNested = lists:map(OfEtsTable, PerTableStats),
+    MsgsFlattened = lists:append(MsgsNested),
+    aggregate_by_path(MsgsFlattened, Timestamp).
 
 -spec of_ets_table(beam_stats_ets_table:t(), binary(), erlang:timestamp()) ->
     [t()].
@@ -150,9 +151,13 @@ of_ets_table(#beam_stats_ets_table
     <<NodeID/binary>>,
     Timestamp
 ) ->
-    IDBin     = beam_stats_ets_table:id_to_bin(ID),
+    IDType =
+        case ID =:= Name
+        of  true  -> <<"NAMED">>
+        ;   false -> <<"TID">>
+        end,
     NameBin   = atom_to_binary(Name, latin1),
-    NameAndID = [NameBin, IDBin],
+    NameAndID = [NameBin, IDType],
     [ cons([NodeID, <<"ets_table">>, <<"size">>   | NameAndID], Size  , Timestamp)
     , cons([NodeID, <<"ets_table">>, <<"memory">> | NameAndID], Memory, Timestamp)
     ].

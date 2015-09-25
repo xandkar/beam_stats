@@ -101,10 +101,10 @@ t_full_cycle(_Cfg) ->
         , <<"beam_stats_v0.node_foo_host_bar.memory.mem_type_foo:1|g">>
         , <<"beam_stats_v0.node_foo_host_bar.memory.mem_type_bar:2|g">>
         , <<"beam_stats_v0.node_foo_host_bar.memory.mem_type_baz:3|g">>
-        , <<"beam_stats_v0.node_foo_host_bar.ets_table.size.foo.foo:5|g">>
-        , <<"beam_stats_v0.node_foo_host_bar.ets_table.memory.foo.foo:40|g">>
-        , <<"beam_stats_v0.node_foo_host_bar.ets_table.size.bar.37:8|g">>
-        , <<"beam_stats_v0.node_foo_host_bar.ets_table.memory.bar.37:64|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.size.foo.NAMED:5|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.memory.foo.NAMED:40|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.size.bar.TID:16|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.memory.bar.TID:128|g">>
 
         % Processes totals
         , <<"beam_stats_v0.node_foo_host_bar.processes_count_all:4|g">>
@@ -247,9 +247,16 @@ meck_expect_beam_stats(Overrides) ->
         , size   = 5
         , memory = 40
         },
-    ETSTableStatsBar =
+    ETSTableStatsBarA =
         #beam_stats_ets_table
         { id     = 37
+        , name   = bar
+        , size   = 8
+        , memory = 64
+        },
+    ETSTableStatsBarB =
+        #beam_stats_ets_table
+        { id     = 38
         , name   = bar
         , size   = 8
         , memory = 64
@@ -268,16 +275,21 @@ meck_expect_beam_stats(Overrides) ->
         end
     ),
     meck:expect(beam_stats_source, ets_all,
-        fun () -> [foo, 37] end),
+        fun () -> [foo, 37, 38] end),
     meck:expect(beam_stats_source, erlang_system_info,
         fun (wordsize) -> 8 end),
     meck:expect(beam_stats_source, ets_info,
         fun (foo, memory) -> 5
         ;   (foo, name  ) -> foo
         ;   (foo, size  ) -> 5
+
         ;   (37 , memory) -> 8
         ;   (37 , name  ) -> bar
         ;   (37 , size  ) -> 8
+
+        ;   (38 , memory) -> 8
+        ;   (38 , name  ) -> bar
+        ;   (38 , size  ) -> 8
         end
     ),
     meck:expect(beam_stats_source, erlang_processes,
@@ -348,6 +360,6 @@ meck_expect_beam_stats(Overrides) ->
     , context_switches = ContextSwitches
     , reductions       = 9
     , run_queue        = 17
-    , ets              = [ETSTableStatsFoo, ETSTableStatsBar]
+    , ets              = [ETSTableStatsFoo, ETSTableStatsBarA, ETSTableStatsBarB]
     , processes        = Processes
     }.

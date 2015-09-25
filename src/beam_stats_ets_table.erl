@@ -9,7 +9,6 @@
 
 -export(
     [ of_id/1
-    , id_to_bin/1
     ]).
 
 -type id() ::
@@ -35,10 +34,3 @@ of_id(ID) ->
     , size   = beam_stats_source:ets_info(ID, size)
     , memory = NumberOfBytes
     }.
-
--spec id_to_bin(atom() | ets:tid()) ->
-    binary().
-id_to_bin(ID) when is_atom(ID) ->
-    atom_to_binary(ID, latin1);
-id_to_bin(ID) when is_integer(ID) ->
-    integer_to_binary(ID).
