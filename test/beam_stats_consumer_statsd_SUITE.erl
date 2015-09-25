@@ -93,46 +93,46 @@ t_full_cycle(_Cfg) ->
         >>,
     ct:log("PacketsCombined: ~n~s~n", [PacketsCombined]),
     MsgsExpected =
-        [ <<"beam_stats.node_foo_host_bar.io.bytes_in:3|g">>
-        , <<"beam_stats.node_foo_host_bar.io.bytes_out:7|g">>
-        , <<"beam_stats.node_foo_host_bar.context_switches:5|g">>
-        , <<"beam_stats.node_foo_host_bar.reductions:9|g">>
-        , <<"beam_stats.node_foo_host_bar.run_queue:17|g">>
-        , <<"beam_stats.node_foo_host_bar.memory.mem_type_foo:1|g">>
-        , <<"beam_stats.node_foo_host_bar.memory.mem_type_bar:2|g">>
-        , <<"beam_stats.node_foo_host_bar.memory.mem_type_baz:3|g">>
-        , <<"beam_stats.node_foo_host_bar.ets_table.size.foo.foo:5|g">>
-        , <<"beam_stats.node_foo_host_bar.ets_table.memory.foo.foo:40|g">>
-        , <<"beam_stats.node_foo_host_bar.ets_table.size.bar.37:8|g">>
-        , <<"beam_stats.node_foo_host_bar.ets_table.memory.bar.37:64|g">>
+        [ <<"beam_stats_v0.node_foo_host_bar.io.bytes_in:3|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.io.bytes_out:7|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.context_switches:5|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.reductions:9|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.run_queue:17|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.memory.mem_type_foo:1|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.memory.mem_type_bar:2|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.memory.mem_type_baz:3|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.size.foo.foo:5|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.memory.foo.foo:40|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.size.bar.37:8|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.ets_table.memory.bar.37:64|g">>
 
         % Processes totals
-        , <<"beam_stats.node_foo_host_bar.processes_count_all:4|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_exiting:0|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_garbage_collecting:0|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_registered:1|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_runnable:0|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_running:3|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_suspended:0|g">>
-        , <<"beam_stats.node_foo_host_bar.processes_count_waiting:1|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_all:4|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_exiting:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_garbage_collecting:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_registered:1|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_runnable:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_running:3|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_suspended:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.processes_count_waiting:1|g">>
 
         % Process 1
-        , <<"beam_stats.node_foo_host_bar.process_memory.named--reg_name_foo:15|g">>
-        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.named--reg_name_foo:25|g">>
-        , <<"beam_stats.node_foo_host_bar.process_stack_size.named--reg_name_foo:10|g">>
-        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.named--reg_name_foo:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_memory.named--reg_name_foo:15|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.named--reg_name_foo:25|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.named--reg_name_foo:10|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.named--reg_name_foo:0|g">>
 
         % Process 2
-        , <<"beam_stats.node_foo_host_bar.process_memory.spawned-via--bar_mod-bar_fun-1--NONE--NONE:25|g">>
-        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:35|g">>
-        , <<"beam_stats.node_foo_host_bar.process_stack_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:40|g">>
-        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.spawned-via--bar_mod-bar_fun-1--NONE--NONE:5|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_memory.spawned-via--bar_mod-bar_fun-1--NONE--NONE:25|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:35|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:40|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.spawned-via--bar_mod-bar_fun-1--NONE--NONE:5|g">>
 
         % Process 3 and 4, aggregated by origin
-        , <<"beam_stats.node_foo_host_bar.process_memory.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:30|g">>
-        , <<"beam_stats.node_foo_host_bar.process_total_heap_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:45|g">>
-        , <<"beam_stats.node_foo_host_bar.process_stack_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:55|g">>
-        , <<"beam_stats.node_foo_host_bar.process_message_queue_len.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:1|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_memory.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:30|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:45|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:55|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:1|g">>
         ],
     MsgsReceived = binary:split(PacketsCombined, <<"\n">>, [global, trim]),
     RemoveExpectedFromReceived =

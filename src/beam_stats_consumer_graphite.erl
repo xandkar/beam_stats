@@ -32,7 +32,6 @@
 -type state() ::
     #state{}.
 
--define(PATH_PREFIX         , <<"beam_stats">>).
 -define(DEFAULT_HOST        , "localhost").
 -define(DEFAULT_PORT        , 2003).
 -define(DEFAULT_TIMEOUT     , 5000).
@@ -115,8 +114,5 @@ beam_stats_queue_to_binary(Q) ->
 -spec beam_stats_to_bins(beam_stats:t()) ->
     [binary()].
 beam_stats_to_bins(#beam_stats{}=BeamStats) ->
-    MsgAddPrefix =
-        fun (M) -> beam_stats_msg_graphite:add_path_prefix(M, ?PATH_PREFIX) end,
-    Msgs1 = beam_stats_msg_graphite:of_beam_stats(BeamStats),
-    Msgs2 = lists:map(MsgAddPrefix, Msgs1),
-    lists:map(fun beam_stats_msg_graphite:to_bin/1, Msgs2).
+    Msgs = beam_stats_msg_graphite:of_beam_stats(BeamStats),
+    lists:map(fun beam_stats_msg_graphite:to_bin/1, Msgs).

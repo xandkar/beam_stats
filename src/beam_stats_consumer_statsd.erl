@@ -41,8 +41,6 @@
 -type state() ::
     #state{}.
 
--define(PATH_PREFIX, <<"beam_stats">>).
-
 %% ============================================================================
 %% Consumer implementation
 %% ============================================================================
@@ -154,10 +152,7 @@ beam_stats_queue_to_packets(Q, NumMsgsPerPacket, StaticNodeNameOpt) ->
 beam_stats_to_bins(#beam_stats{node_id=NodeID}=BeamStats, StaticNodeNameOpt) ->
     NodeIDBinDefault = beam_stats_msg_graphite:node_id_to_bin(NodeID),
     NodeIDBin = hope_option:get(StaticNodeNameOpt, NodeIDBinDefault),
-    GraphiteMsgAddPrefix =
-        fun (M) -> beam_stats_msg_graphite:add_path_prefix(M, ?PATH_PREFIX) end,
-    MsgsGraphite1 = beam_stats_msg_graphite:of_beam_stats(BeamStats, NodeIDBin),
-    MsgsGraphite2 = lists:map(GraphiteMsgAddPrefix, MsgsGraphite1),
+    MsgsGraphite = beam_stats_msg_graphite:of_beam_stats(BeamStats, NodeIDBin),
     MsgsStatsD =
-        lists:map(fun beam_stats_msg_statsd_gauge:of_msg_graphite/1, MsgsGraphite2),
+        lists:map(fun beam_stats_msg_statsd_gauge:of_msg_graphite/1, MsgsGraphite),
     lists:map(fun beam_stats_msg_statsd_gauge:to_bin/1, MsgsStatsD).

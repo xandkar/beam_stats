@@ -16,7 +16,6 @@
     , of_beam_stats/2
     , to_bin/1
     , path_to_bin/1
-    , add_path_prefix/2
     , node_id_to_bin/1
     ]).
 
@@ -53,15 +52,17 @@ of_beam_stats(#beam_stats
 ) ->
     Ts = Timestamp,
     N = NodeID,
-    [ cons([N, <<"io">>               , <<"bytes_in">> ], IOBytesIn      , Ts)
-    , cons([N, <<"io">>               , <<"bytes_out">>], IOBytesOut     , Ts)
-    , cons([N, <<"context_switches">>                  ], ContextSwitches, Ts)
-    , cons([N, <<"reductions">>                        ], Reductions     , Ts)
-    , cons([N, <<"run_queue">>                         ], RunQueue       , Ts)
-    | of_memory(Memory, NodeID, Ts)
-    ]
-    ++ of_ets(ETS, NodeID, Ts)
-    ++ of_processes(Processes, NodeID, Ts).
+    Msgs =
+        [ cons([N, <<"io">>               , <<"bytes_in">> ], IOBytesIn      , Ts)
+        , cons([N, <<"io">>               , <<"bytes_out">>], IOBytesOut     , Ts)
+        , cons([N, <<"context_switches">>                  ], ContextSwitches, Ts)
+        , cons([N, <<"reductions">>                        ], Reductions     , Ts)
+        , cons([N, <<"run_queue">>                         ], RunQueue       , Ts)
+        | of_memory(Memory, NodeID, Ts)
+        ]
+        ++ of_ets(ETS, NodeID, Ts)
+        ++ of_processes(Processes, NodeID, Ts),
+    lists:map(fun path_prefix_schema_version/1, Msgs).
 
 -spec to_bin(t()) ->
     binary().
@@ -78,11 +79,6 @@ to_bin(
     TimestampBin = integer_to_binary(TimestampInt),
     <<PathBin/binary, " ", ValueBin/binary, " ", TimestampBin/binary>>.
 
--spec add_path_prefix(t(), binary()) ->
-    t().
-add_path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
-    T?T{path = [Prefix | Path]}.
-
 -spec path_to_bin([binary()]) ->
     binary().
 path_to_bin(Path) ->
@@ -97,6 +93,21 @@ node_id_to_bin(NodeID) ->
 %% ============================================================================
 %% Helpers
 %% ============================================================================
+
+-spec path_prefix_schema_version(t()) ->
+    t().
+path_prefix_schema_version(?T{}=T) ->
+    path_prefix(T, schema_version()).
+
+-spec path_prefix(t(), binary()) ->
+    t().
+path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
+    T?T{path = [Prefix | Path]}.
+
+-spec schema_version() ->
+    binary().
+schema_version() ->
+    <<"beam_stats_v0">>.
 
 -spec bin_join([binary()], binary()) ->
     binary().
