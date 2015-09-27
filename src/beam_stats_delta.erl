@@ -9,6 +9,7 @@
     , stop/1
     , of_context_switches/1
     , of_io/1
+    , of_reductions/1
     ]).
 
 -record(?MODULE,
@@ -61,6 +62,18 @@ of_io(?T{erlang_statistics=Table}) ->
     { {io_bytes_in  , DeltaIn}
     , {io_bytes_out , DeltaOut}
     }.
+
+% We can get between-calls-delta directly from erlang:statistics(reductions),
+% but then if some other process also calls it - we'll get incorrect data on
+% the next call.
+% Managing deltas ourselves here, will at least reduce the possible callers to
+% only those with knowledge of our table ID.
+-spec of_reductions(t()) ->
+    non_neg_integer().
+of_reductions(?T{erlang_statistics=Table}) ->
+    Key = reductions,
+    {Current, _} = beam_stats_source:erlang_statistics(Key),
+    delta(Table, Key, Current).
 
 -spec delta(ets:tid(), atom(), non_neg_integer()) ->
     non_neg_integer().
