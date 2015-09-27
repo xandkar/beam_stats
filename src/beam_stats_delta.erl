@@ -7,6 +7,7 @@
 -export(
     [ start/0
     , stop/1
+    , gc/1
     , of_context_switches/1
     , of_io/1
     , of_reductions/1
@@ -46,6 +47,30 @@ stop(?T
     true = ets:delete(TidErlangStatistics),
     true = ets:delete(TidErlangProcessInfoReductions),
     {}.
+
+-spec gc(t()) ->
+    {}.
+gc(?T{erlang_process_info_reductions=Table}=T) ->
+    case ets:first(Table)
+    of  '$end_of_table' ->
+            {}
+    ;   FirstPid when is_pid(FirstPid) ->
+            gc(T, FirstPid)
+    end.
+
+-spec gc(t(), pid()) ->
+    {}.
+gc(?T{erlang_process_info_reductions=Table}=T, Pid) ->
+    case beam_stats_source:erlang_is_process_alive(Pid)
+    of  true  -> true
+    ;   false -> ets:delete(Table, Pid)
+    end,
+    case ets:next(Table, Pid)
+    of  '$end_of_table' ->
+            {}
+    ;   NextPid when is_pid(NextPid) ->
+            gc(T, NextPid)
+    end.
 
 -spec of_context_switches(t()) ->
     non_neg_integer().

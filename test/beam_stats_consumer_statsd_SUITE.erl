@@ -264,6 +264,8 @@ meck_expect_beam_stats(Overrides) ->
         , size   = 8
         , memory = 64
         },
+    meck:expect(beam_stats_source, erlang_is_process_alive,
+        fun (_) -> true end),
     meck:expect(beam_stats_source, erlang_memory,
         fun () -> [{mem_type_foo, 1}, {mem_type_bar, 2}, {mem_type_baz, 3}] end),
     meck:expect(beam_stats_source, erlang_node,

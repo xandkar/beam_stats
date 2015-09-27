@@ -1,7 +1,8 @@
 -module(beam_stats_source).
 
 -export(
-    [ erlang_memory/0
+    [ erlang_is_process_alive/1
+    , erlang_memory/0
     , erlang_node/0
     , erlang_process_info/2
     , erlang_processes/0
@@ -12,6 +13,9 @@
     , ets_info/2
     , os_timestamp/0
     ]).
+
+erlang_is_process_alive(Pid) ->
+    erlang:is_process_alive(Pid).
 
 erlang_memory() ->
     erlang:memory().
