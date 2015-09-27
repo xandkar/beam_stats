@@ -14,6 +14,7 @@
 %% Test cases
 -export(
     [ t_full_cycle/1
+    , t_deltas_gc/1
     ]).
 
 -define(GROUP, beam_stats_consumer_statsd).
@@ -28,6 +29,7 @@ all() ->
 groups() ->
     Tests =
         [ t_full_cycle
+        , t_deltas_gc
         ],
     Properties = [],
     [{?GROUP, Properties, Tests}].
@@ -35,6 +37,32 @@ groups() ->
 %% ============================================================================
 %%  Test cases
 %% ============================================================================
+
+t_deltas_gc(_Cfg) ->
+    Pid1 = list_to_pid("<0.101.0>"),
+    Pid2 = list_to_pid("<0.102.0>"),
+    Pid3 = list_to_pid("<0.103.0>"),
+    meck:new(beam_stats_source),
+    meck:expect(beam_stats_source, erlang_process_info,
+        fun (P, reductions) when P == Pid1 -> {reductions, 1}
+        ;   (P, reductions) when P == Pid2 -> {reductions, 2}
+        ;   (P, reductions) when P == Pid3 -> {reductions, 3}
+        end
+    ),
+    DeltasServer = beam_stats_delta:start(),
+    {some, 1} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid1),
+    {some, 2} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid2),
+    {some, 3} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid3),
+    {some, 0} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid1),
+    {some, 0} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid2),
+    {some, 0} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid3),
+    meck:expect(beam_stats_source, erlang_is_process_alive, fun (_) -> false end),
+    {} = beam_stats_delta:gc(DeltasServer),
+    {some, 1} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid1),
+    {some, 2} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid2),
+    {some, 3} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid3),
+    {} = beam_stats_delta:stop(DeltasServer),
+    meck:unload(beam_stats_source).
 
 t_full_cycle(_Cfg) ->
     meck:new(beam_stats_source),
