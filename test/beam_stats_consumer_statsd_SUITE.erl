@@ -38,11 +38,7 @@ groups() ->
 
 t_full_cycle(_Cfg) ->
     meck:new(beam_stats_source),
-    BEAMStatsExpected = meck_expect_beam_stats(),
-    BEAMStatsComputed = beam_stats_state:export(beam_stats_state:new()),
-    ct:log("BEAMStatsExpected: ~p~n", [BEAMStatsExpected]),
-    ct:log("BEAMStatsComputed: ~p~n", [BEAMStatsComputed]),
-    BEAMStatsExpected = BEAMStatsComputed,
+    _BEAMStatsExpected = meck_expect_beam_stats(),
 
     {ok,[hope,beam_stats]} = application:ensure_all_started(beam_stats),
     ct:log("beam_stats started~n"),

@@ -10,7 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    beam_stats_sup:start_link().
+    DeltasServer = beam_stats_delta:start(),
+    beam_stats_sup:start_link(DeltasServer).
 
 stop(_State) ->
     ok.
