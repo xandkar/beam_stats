@@ -61,11 +61,12 @@ gc(?T{erlang_process_info_reductions=Table}=T) ->
 -spec gc(t(), pid()) ->
     {}.
 gc(?T{erlang_process_info_reductions=Table}=T, Pid) ->
+    Next = ets:next(Table, Pid),
     case beam_stats_source:erlang_is_process_alive(Pid)
     of  true  -> true
     ;   false -> ets:delete(Table, Pid)
     end,
-    case ets:next(Table, Pid)
+    case Next
     of  '$end_of_table' ->
             {}
     ;   NextPid when is_pid(NextPid) ->
