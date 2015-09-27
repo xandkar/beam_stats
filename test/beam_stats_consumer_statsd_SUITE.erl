@@ -38,11 +38,7 @@ groups() ->
 
 t_full_cycle(_Cfg) ->
     meck:new(beam_stats_source),
-    BEAMStatsExpected = meck_expect_beam_stats(),
-    BEAMStatsComputed = beam_stats_state:export(beam_stats_state:new()),
-    ct:log("BEAMStatsExpected: ~p~n", [BEAMStatsExpected]),
-    ct:log("BEAMStatsComputed: ~p~n", [BEAMStatsComputed]),
-    BEAMStatsExpected = BEAMStatsComputed,
+    _BEAMStatsExpected = meck_expect_beam_stats(),
 
     {ok,[hope,beam_stats]} = application:ensure_all_started(beam_stats),
     ct:log("beam_stats started~n"),
@@ -64,6 +60,7 @@ t_full_cycle(_Cfg) ->
         [ {io_bytes_in      , 6}
         , {io_bytes_out     , 14}
         , {context_switches , 10}
+        , {reductions       , 18}
         ]
     ),
     ct:log("meck_expect_beam_stats ok~n"),
@@ -154,6 +151,7 @@ meck_expect_beam_stats(Overrides) ->
     IOBytesIn       = hope_kv_list:get(Overrides, io_bytes_in , 3),
     IOBytesOut      = hope_kv_list:get(Overrides, io_bytes_out, 7),
     ContextSwitches = hope_kv_list:get(Overrides, context_switches, 5),
+    Reductions      = hope_kv_list:get(Overrides, reductions, 9),
     Pid0 = list_to_pid("<0.0.0>"),
     Pid1 = list_to_pid("<0.1.0>"),
     Pid2 = list_to_pid("<0.2.0>"),
@@ -270,7 +268,7 @@ meck_expect_beam_stats(Overrides) ->
     meck:expect(beam_stats_source, erlang_statistics,
         fun (io              ) -> {{input, IOBytesIn}, {output, IOBytesOut}}
         ;   (context_switches) -> {ContextSwitches, 0}
-        ;   (reductions      ) -> {0, 9} % 1st element is unused
+        ;   (reductions      ) -> {Reductions, undefined} % 2nd element is unused
         ;   (run_queue       ) -> 17
         end
     ),
