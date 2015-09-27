@@ -8,8 +8,8 @@
     ]).
 
 -export(
-    [ collect/0
-    , collect_and_print/0
+    [ collect/1
+    , collect_and_print/1
     , print/1
     ]).
 
@@ -18,11 +18,11 @@
 -type t() ::
     ?T{}.
 
--spec collect() ->
+-spec collect(beam_stats_delta:t()) ->
     t().
-collect() ->
+collect(DeltasServer) ->
     Pids = beam_stats_source:erlang_processes(),
-    PsOpts = [beam_stats_process:of_pid(P) || P <- Pids],
+    PsOpts = [beam_stats_process:of_pid(P, DeltasServer) || P <- Pids],
     Ps = [P || {some, P} <- PsOpts],
     ?T
     { individual_stats
@@ -45,8 +45,10 @@ collect() ->
         = length([P || P <- Ps, P#beam_stats_process.status =:= waiting])
     }.
 
-collect_and_print() ->
-    print(collect()).
+-spec collect_and_print(beam_stats_delta:t()) ->
+    ok.
+collect_and_print(DeltasServer) ->
+    print(collect(DeltasServer)).
 
 -spec print(t()) ->
     ok.

@@ -7,4 +7,5 @@
     , total_heap_size   ::               non_neg_integer()
     , stack_size        ::               non_neg_integer()
     , message_queue_len ::               non_neg_integer()
+    , reductions        ::               non_neg_integer()
     }).

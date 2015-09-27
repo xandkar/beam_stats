@@ -122,6 +122,7 @@ produce(
     ConsumersList = ordsets:to_list(ConsumersSet),
     Send = fun (Consumer) -> MsgSendFun(Consumer, Stats) end,
     ok = lists:foreach(Send, ConsumersList),
+    beam_stats_delta:gc(DeltasServer),
     State.
 
 -spec schedule_first_production() ->

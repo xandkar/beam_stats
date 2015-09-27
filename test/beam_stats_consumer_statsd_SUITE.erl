@@ -14,6 +14,7 @@
 %% Test cases
 -export(
     [ t_full_cycle/1
+    , t_deltas_gc/1
     ]).
 
 -define(GROUP, beam_stats_consumer_statsd).
@@ -28,6 +29,7 @@ all() ->
 groups() ->
     Tests =
         [ t_full_cycle
+        , t_deltas_gc
         ],
     Properties = [],
     [{?GROUP, Properties, Tests}].
@@ -35,6 +37,32 @@ groups() ->
 %% ============================================================================
 %%  Test cases
 %% ============================================================================
+
+t_deltas_gc(_Cfg) ->
+    Pid1 = list_to_pid("<0.101.0>"),
+    Pid2 = list_to_pid("<0.102.0>"),
+    Pid3 = list_to_pid("<0.103.0>"),
+    meck:new(beam_stats_source),
+    meck:expect(beam_stats_source, erlang_process_info,
+        fun (P, reductions) when P == Pid1 -> {reductions, 1}
+        ;   (P, reductions) when P == Pid2 -> {reductions, 2}
+        ;   (P, reductions) when P == Pid3 -> {reductions, 3}
+        end
+    ),
+    DeltasServer = beam_stats_delta:start(),
+    {some, 1} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid1),
+    {some, 2} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid2),
+    {some, 3} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid3),
+    {some, 0} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid1),
+    {some, 0} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid2),
+    {some, 0} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid3),
+    meck:expect(beam_stats_source, erlang_is_process_alive, fun (_) -> false end),
+    {} = beam_stats_delta:gc(DeltasServer),
+    {some, 1} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid1),
+    {some, 2} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid2),
+    {some, 3} = beam_stats_delta:of_process_info_reductions(DeltasServer, Pid3),
+    {} = beam_stats_delta:stop(DeltasServer),
+    meck:unload(beam_stats_source).
 
 t_full_cycle(_Cfg) ->
     meck:new(beam_stats_source),
@@ -118,18 +146,21 @@ t_full_cycle(_Cfg) ->
         , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.named--reg_name_foo:25|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.named--reg_name_foo:10|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.named--reg_name_foo:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_reductions.named--reg_name_foo:0|g">>
 
         % Process 2
         , <<"beam_stats_v0.node_foo_host_bar.process_memory.spawned-via--bar_mod-bar_fun-1--NONE--NONE:25|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:35|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:40|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.spawned-via--bar_mod-bar_fun-1--NONE--NONE:5|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_reductions.spawned-via--bar_mod-bar_fun-1--NONE--NONE:0|g">>
 
         % Process 3 and 4, aggregated by origin
         , <<"beam_stats_v0.node_foo_host_bar.process_memory.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:30|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:45|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:55|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:1|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_reductions.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:0|g">>
         ],
     MsgsReceived = binary:split(PacketsCombined, <<"\n">>, [global, trim]),
     RemoveExpectedFromReceived =
@@ -141,7 +172,9 @@ t_full_cycle(_Cfg) ->
             true = lists:member(Expected, Received),
             Received -- [Expected]
         end,
-    [] = lists:foldl(RemoveExpectedFromReceived, MsgsReceived, MsgsExpected),
+    MsgsRemaining = lists:foldl(RemoveExpectedFromReceived, MsgsReceived, MsgsExpected),
+    ct:log("MsgsRemaining: ~p", [MsgsRemaining]),
+    [] = MsgsRemaining,
     meck:unload(beam_stats_source).
 
 meck_expect_beam_stats() ->
@@ -259,6 +292,8 @@ meck_expect_beam_stats(Overrides) ->
         , size   = 8
         , memory = 64
         },
+    meck:expect(beam_stats_source, erlang_is_process_alive,
+        fun (_) -> true end),
     meck:expect(beam_stats_source, erlang_memory,
         fun () -> [{mem_type_foo, 1}, {mem_type_bar, 2}, {mem_type_baz, 3}] end),
     meck:expect(beam_stats_source, erlang_node,
@@ -305,6 +340,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 25}
                 ;   stack_size        -> {K, 10}
                 ;   message_queue_len -> {K, 0}
+                ;   reductions        -> {K, 1}
                 end
         ;   (P, K) when P == Pid2 ->
                 case K
@@ -316,6 +352,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 35}
                 ;   stack_size        -> {K, 40}
                 ;   message_queue_len -> {K, 5}
+                ;   reductions        -> {K, 2}
                 end
         ;   (P, K) when P == Pid3 ->
                 Dict =
@@ -331,6 +368,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 35}
                 ;   stack_size        -> {K, 40}
                 ;   message_queue_len -> {K, 1}
+                ;   reductions        -> {K, 3}
                 end
         ;   (P, K) when P == Pid4 ->
                 Dict =
@@ -346,6 +384,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 10}
                 ;   stack_size        -> {K, 15}
                 ;   message_queue_len -> {K, 0}
+                ;   reductions        -> {K, 4}
                 end
         end
     ),
