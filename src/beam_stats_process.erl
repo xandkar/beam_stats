@@ -11,7 +11,7 @@
     ]).
 
 -export(
-    [ of_pid/1
+    [ of_pid/2
     , get_best_known_origin/1
     , print/1
     ]).
@@ -42,11 +42,11 @@
 %% Public API
 %% ============================================================================
 
--spec of_pid(pid()) ->
+-spec of_pid(pid(), beam_stats_delta:t()) ->
       none        % when process is dead
     | {some, t()} % when process is alive
     .
-of_pid(Pid) ->
+of_pid(Pid, DeltasServer) ->
     try
         Dict = pid_info_exn(Pid, dictionary),
         Ancestry =
@@ -65,6 +65,7 @@ of_pid(Pid) ->
             , total_heap_size   = pid_info_exn(Pid, total_heap_size)
             , stack_size        = pid_info_exn(Pid, stack_size)
             , message_queue_len = pid_info_exn(Pid, message_queue_len)
+            , reductions        = pid_info_reductions(Pid, DeltasServer)
             },
         {some, T}
     catch throw:{process_dead, _} ->
@@ -87,6 +88,7 @@ print(
     , total_heap_size   = TotalHeapSize
     , stack_size        = StackSize
     , message_queue_len = MsgQueueLen
+    , reductions        = Reductions
     }=T
 ) ->
     BestKnownOrigin = get_best_known_origin(T),
@@ -103,6 +105,7 @@ print(
         "TotalHeapSize     : ~p~n"
         "StackSize         : ~p~n"
         "MsgQueueLen       : ~p~n"
+        "Reductions        : ~p~n"
         "~n",
         [ Pid
         , BestKnownOrigin
@@ -115,12 +118,23 @@ print(
         , TotalHeapSize
         , StackSize
         , MsgQueueLen
+        , Reductions
         ]
     ).
 
 %% ============================================================================
 %% Private helpers
 %% ============================================================================
+
+-spec pid_info_reductions(pid(), beam_stats_delta:t()) ->
+    non_neg_integer().
+pid_info_reductions(Pid, DeltasServer) ->
+    case beam_stats_delta:of_process_info_reductions(DeltasServer, Pid)
+    of  {some, Reductions} ->
+            Reductions
+    ;   none ->
+            throw({process_dead, Pid})
+    end.
 
 pid_info_exn(Pid, Key) ->
     {some, Value} = pid_info_opt(Pid, Key),

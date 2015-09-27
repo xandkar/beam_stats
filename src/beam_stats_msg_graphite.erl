@@ -205,6 +205,7 @@ of_process(
     , total_heap_size   = TotalHeapSize
     , stack_size        = StackSize
     , message_queue_len = MsgQueueLen
+    , reductions        = Reductions
     }=Process,
     <<NodeID/binary>>,
     Timestamp
@@ -217,6 +218,7 @@ of_process(
     , cons([N, <<"process_total_heap_size">>   , OriginBin], TotalHeapSize , Ts)
     , cons([N, <<"process_stack_size">>        , OriginBin], StackSize     , Ts)
     , cons([N, <<"process_message_queue_len">> , OriginBin], MsgQueueLen   , Ts)
+    , cons([N, <<"process_reductions">>        , OriginBin], Reductions    , Ts)
     ].
 
 -spec aggregate_by_path([t()], erlang:timestamp()) ->

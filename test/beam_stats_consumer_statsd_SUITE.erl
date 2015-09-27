@@ -118,18 +118,21 @@ t_full_cycle(_Cfg) ->
         , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.named--reg_name_foo:25|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.named--reg_name_foo:10|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.named--reg_name_foo:0|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_reductions.named--reg_name_foo:0|g">>
 
         % Process 2
         , <<"beam_stats_v0.node_foo_host_bar.process_memory.spawned-via--bar_mod-bar_fun-1--NONE--NONE:25|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:35|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.spawned-via--bar_mod-bar_fun-1--NONE--NONE:40|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.spawned-via--bar_mod-bar_fun-1--NONE--NONE:5|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_reductions.spawned-via--bar_mod-bar_fun-1--NONE--NONE:0|g">>
 
         % Process 3 and 4, aggregated by origin
         , <<"beam_stats_v0.node_foo_host_bar.process_memory.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:30|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_total_heap_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:45|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_stack_size.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:55|g">>
         , <<"beam_stats_v0.node_foo_host_bar.process_message_queue_len.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:1|g">>
+        , <<"beam_stats_v0.node_foo_host_bar.process_reductions.spawned-via--baz_mod-baz_fun-3--baz_otp_mod-baz_otp_fun-2--PID-PID:0|g">>
         ],
     MsgsReceived = binary:split(PacketsCombined, <<"\n">>, [global, trim]),
     RemoveExpectedFromReceived =
@@ -141,7 +144,9 @@ t_full_cycle(_Cfg) ->
             true = lists:member(Expected, Received),
             Received -- [Expected]
         end,
-    [] = lists:foldl(RemoveExpectedFromReceived, MsgsReceived, MsgsExpected),
+    MsgsRemaining = lists:foldl(RemoveExpectedFromReceived, MsgsReceived, MsgsExpected),
+    ct:log("MsgsRemaining: ~p", [MsgsRemaining]),
+    [] = MsgsRemaining,
     meck:unload(beam_stats_source).
 
 meck_expect_beam_stats() ->
@@ -305,6 +310,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 25}
                 ;   stack_size        -> {K, 10}
                 ;   message_queue_len -> {K, 0}
+                ;   reductions        -> {K, 1}
                 end
         ;   (P, K) when P == Pid2 ->
                 case K
@@ -316,6 +322,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 35}
                 ;   stack_size        -> {K, 40}
                 ;   message_queue_len -> {K, 5}
+                ;   reductions        -> {K, 2}
                 end
         ;   (P, K) when P == Pid3 ->
                 Dict =
@@ -331,6 +338,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 35}
                 ;   stack_size        -> {K, 40}
                 ;   message_queue_len -> {K, 1}
+                ;   reductions        -> {K, 3}
                 end
         ;   (P, K) when P == Pid4 ->
                 Dict =
@@ -346,6 +354,7 @@ meck_expect_beam_stats(Overrides) ->
                 ;   total_heap_size   -> {K, 10}
                 ;   stack_size        -> {K, 15}
                 ;   message_queue_len -> {K, 0}
+                ;   reductions        -> {K, 4}
                 end
         end
     ),

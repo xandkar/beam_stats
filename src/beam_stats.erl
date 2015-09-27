@@ -31,5 +31,5 @@ collect(DeltasServer) ->
     , reductions       = beam_stats_delta:of_reductions(DeltasServer)
     , run_queue        = beam_stats_source:erlang_statistics(run_queue)
     , ets              = beam_stats_ets:collect()
-    , processes        = beam_stats_processes:collect()
+    , processes        = beam_stats_processes:collect(DeltasServer)
     }.
