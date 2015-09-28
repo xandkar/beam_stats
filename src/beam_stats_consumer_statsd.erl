@@ -86,13 +86,13 @@ terminate(#state{sock=SockOpt}) ->
 %% Transport
 %% ============================================================================
 
--spec try_to_connect_and_send(binary(), state()) ->
+-spec try_to_connect_and_send(iolist(), state()) ->
     state().
-try_to_connect_and_send(<<Payload/binary>>, #state{}=State1) ->
+try_to_connect_and_send(Payload, #state{}=State1) ->
     State2 = try_to_connect_if_no_socket(State1),
     try_to_send(State2, Payload).
 
--spec try_to_send(state(), binary()) ->
+-spec try_to_send(state(), iolist()) ->
     state().
 try_to_send(#state{sock=none}=State, _) ->
     ?log_error("Sending failed. No socket in state."),
@@ -141,18 +141,17 @@ try_to_connect_if_no_socket(#state{sock=none, src_port=SrcPort}=State) ->
     non_neg_integer(),
     hope_option:t(binary())
 ) ->
-    [binary()].
+    [iolist()].
 beam_stats_queue_to_packets(Q, NumMsgsPerPacket, StaticNodeNameOpt) ->
-    MsgBins = lists:append([beam_stats_to_bins(B, StaticNodeNameOpt) || B <- queue:to_list(Q)]),
-    MsgBinsChucks = hope_list:divide(MsgBins, NumMsgsPerPacket),
-    lists:map(fun erlang:iolist_to_binary/1, MsgBinsChucks).
+    MsgIOLists = lists:append([beam_stats_to_iolists(B, StaticNodeNameOpt) || B <- queue:to_list(Q)]),
+    hope_list:divide(MsgIOLists, NumMsgsPerPacket).
 
--spec beam_stats_to_bins(beam_stats:t(), hope_option:t(binary())) ->
-    [binary()].
-beam_stats_to_bins(#beam_stats{node_id=NodeID}=BeamStats, StaticNodeNameOpt) ->
+-spec beam_stats_to_iolists(beam_stats:t(), hope_option:t(binary())) ->
+    [iolist()].
+beam_stats_to_iolists(#beam_stats{node_id=NodeID}=BeamStats, StaticNodeNameOpt) ->
     NodeIDBinDefault = beam_stats_msg_graphite:node_id_to_bin(NodeID),
     NodeIDBin = hope_option:get(StaticNodeNameOpt, NodeIDBinDefault),
     MsgsGraphite = beam_stats_msg_graphite:of_beam_stats(BeamStats, NodeIDBin),
     MsgsStatsD =
         lists:map(fun beam_stats_msg_statsd_gauge:of_msg_graphite/1, MsgsGraphite),
-    lists:map(fun beam_stats_msg_statsd_gauge:to_bin/1, MsgsStatsD).
+    lists:map(fun beam_stats_msg_statsd_gauge:to_iolist/1, MsgsStatsD).
