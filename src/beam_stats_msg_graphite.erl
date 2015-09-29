@@ -14,8 +14,8 @@
 -export(
     [ of_beam_stats/1
     , of_beam_stats/2
-    , to_bin/1
-    , path_to_bin/1
+    , to_iolist/1
+    , path_to_iolist/1
     , node_id_to_bin/1
     ]).
 
@@ -64,25 +64,25 @@ of_beam_stats(#beam_stats
         ++ of_processes(Processes, NodeID, Ts),
     lists:map(fun path_prefix_schema_version/1, Msgs).
 
--spec to_bin(t()) ->
-    binary().
-to_bin(
+-spec to_iolist(t()) ->
+    iolist().
+to_iolist(
     ?T
     { path      = Path
     , value     = Value
     , timestamp = Timestamp
     }
 ) ->
-    PathBin = path_to_bin(Path),
+    PathIOList = path_to_iolist(Path),
     ValueBin = integer_to_binary(Value),
     TimestampInt = timestamp_to_integer(Timestamp),
     TimestampBin = integer_to_binary(TimestampInt),
-    <<PathBin/binary, " ", ValueBin/binary, " ", TimestampBin/binary>>.
+    [PathIOList, <<" ">>, ValueBin, <<" ">>, TimestampBin].
 
--spec path_to_bin([binary()]) ->
-    binary().
-path_to_bin(Path) ->
-    bin_join(Path, <<".">>).
+-spec path_to_iolist([binary()]) ->
+    iolist().
+path_to_iolist(Path) ->
+    interleave(Path, <<".">>).
 
 -spec node_id_to_bin(node()) ->
     binary().
@@ -109,13 +109,12 @@ path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
 schema_version() ->
     <<"beam_stats_v0">>.
 
--spec bin_join([binary()], binary()) ->
-    binary().
-bin_join([]                         , <<_/binary>>  ) -> <<>>;
-bin_join([<<B/binary>> | []]        , <<_/binary>>  ) -> B;
-bin_join([<<B/binary>> | [_|_]=Bins], <<Sep/binary>>) ->
-    BinsBin = bin_join(Bins, Sep),
-    <<B/binary, Sep/binary, BinsBin/binary>>.
+-spec interleave(iolist(), iodata()) ->
+    iolist().
+interleave([], _) -> [];
+interleave([X], _) -> [X];
+interleave([X|Xs], Sep) ->
+    [X, Sep | interleave(Xs, Sep)].
 
 -spec timestamp_to_integer(erlang:timestamp()) ->
     non_neg_integer().

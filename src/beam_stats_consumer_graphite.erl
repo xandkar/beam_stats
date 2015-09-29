@@ -52,7 +52,7 @@ init(Options) ->
 -spec consume(beam_stats_consumer:queue(), state()) ->
     state().
 consume(Q, #state{}=State1) ->
-    Payload = beam_stats_queue_to_binary(Q),
+    Payload = beam_stats_queue_to_iolists(Q),
     State2 = try_to_connect_if_no_socket(State1),
     try_to_send(State2, Payload).
 
@@ -64,7 +64,7 @@ terminate(#state{sock=SockOpt}) ->
 
 %% ============================================================================
 
--spec try_to_send(state(), binary()) ->
+-spec try_to_send(state(), iolist()) ->
     state().
 try_to_send(#state{sock=none}=State, _) ->
     ?log_error("Sending failed. No socket in state."),
@@ -105,14 +105,13 @@ try_to_connect_if_no_socket(
             State#state{sock = none}
     end.
 
--spec beam_stats_queue_to_binary(beam_stats_consumer:queue()) ->
-    binary().
-beam_stats_queue_to_binary(Q) ->
-    Bins = [beam_stats_to_bins(B) || B <- queue:to_list(Q)],
-    iolist_to_binary(Bins).
+-spec beam_stats_queue_to_iolists(beam_stats_consumer:queue()) ->
+    [iolist()].
+beam_stats_queue_to_iolists(Q) ->
+    [beam_stats_to_iolist(B) || B <- queue:to_list(Q)].
 
--spec beam_stats_to_bins(beam_stats:t()) ->
-    [binary()].
-beam_stats_to_bins(#beam_stats{}=BeamStats) ->
+-spec beam_stats_to_iolist(beam_stats:t()) ->
+    [iolist()].
+beam_stats_to_iolist(#beam_stats{}=BeamStats) ->
     Msgs = beam_stats_msg_graphite:of_beam_stats(BeamStats),
-    lists:map(fun beam_stats_msg_graphite:to_bin/1, Msgs).
+    lists:map(fun beam_stats_msg_graphite:to_iolist/1, Msgs).

@@ -9,7 +9,7 @@
 
 -export(
     [ of_msg_graphite/1
-    , to_bin/1
+    , to_iolist/1
     ]).
 
 -define(T, #?MODULE).
@@ -26,24 +26,24 @@ of_msg_graphite(
     , timestamp = _Timestamp
     }
 ) ->
-    PathBin = beam_stats_msg_graphite:path_to_bin(Path),
-    cons(PathBin, Value).
+    PathIOList = beam_stats_msg_graphite:path_to_iolist(Path),
+    cons(PathIOList, Value).
 
--spec cons(binary(), non_neg_integer()) ->
+-spec cons(iolist(), non_neg_integer()) ->
     t().
-cons(<<Name/binary>>, Value) ->
+cons(Name, Value) ->
     ?T
     { name  = Name
     , value = Value
     }.
 
--spec to_bin(t()) ->
-    binary().
-to_bin(
+-spec to_iolist(t()) ->
+    iolist().
+to_iolist(
     ?T
-    { name  = <<Name/binary>>
+    { name  = Name
     , value = Value
     }
 ) when Value >= 0 ->
     ValueBin = integer_to_binary(Value),
-    << Name/binary, ":", ValueBin/binary, "|g\n">>.
+    [Name, <<":">>, ValueBin, <<"|g\n">>].
