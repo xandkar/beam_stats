@@ -109,8 +109,8 @@ path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
 schema_version() ->
     <<"beam_stats_v0">>.
 
--spec interleave(iolist(), iodata()) ->
-    iolist().
+-spec interleave([A], A) ->
+    [A].
 interleave([], _) -> [];
 interleave([X], _) -> [X];
 interleave([X|Xs], Sep) ->
