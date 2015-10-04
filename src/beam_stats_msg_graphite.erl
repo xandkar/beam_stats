@@ -19,6 +19,7 @@
     , node_id_to_bin/1
     ]).
 
+-define(SCHEMA_VERSION, <<"beam_stats_v0">>).
 -define(T, #?MODULE).
 
 -type t() ::
@@ -97,17 +98,12 @@ node_id_to_bin(NodeID) ->
 -spec path_prefix_schema_version(t()) ->
     t().
 path_prefix_schema_version(?T{}=T) ->
-    path_prefix(T, schema_version()).
+    path_prefix(T, ?SCHEMA_VERSION).
 
 -spec path_prefix(t(), binary()) ->
     t().
 path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
     T?T{path = [Prefix | Path]}.
-
--spec schema_version() ->
-    binary().
-schema_version() ->
-    <<"beam_stats_v0">>.
 
 -spec interleave([A], A) ->
     [A].
