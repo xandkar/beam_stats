@@ -83,7 +83,7 @@ to_iolist(
 -spec path_to_iolist([binary()]) ->
     iolist().
 path_to_iolist(Path) ->
-    interleave(Path, <<".">>).
+    list_interleave(Path, <<".">>).
 
 -spec node_id_to_bin(node()) ->
     binary().
@@ -105,14 +105,14 @@ path_prefix_schema_version(?T{}=T) ->
 path_prefix(?T{path=Path}=T, <<Prefix/binary>>) ->
     T?T{path = [Prefix | Path]}.
 
--spec interleave([A], A) ->
+-spec list_interleave([A], A) ->
     [A].
-interleave([], _) ->
+list_interleave([], _) ->
     [];
-interleave([X], _) ->
+list_interleave([X], _) ->
     [X];
-interleave([X|Xs], Sep) ->
-    [X, Sep | interleave(Xs, Sep)].
+list_interleave([X|Xs], Sep) ->
+    [X, Sep | list_interleave(Xs, Sep)].
 
 -spec timestamp_to_integer(erlang:timestamp()) ->
     non_neg_integer().
