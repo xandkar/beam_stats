@@ -111,8 +111,10 @@ schema_version() ->
 
 -spec interleave([A], A) ->
     [A].
-interleave([], _) -> [];
-interleave([X], _) -> [X];
+interleave([], _) ->
+    [];
+interleave([X], _) ->
+    [X];
 interleave([X|Xs], Sep) ->
     [X, Sep | interleave(Xs, Sep)].
 
