@@ -75,7 +75,7 @@ try_to_send(#state{sock={some, Sock}}=State, Payload) ->
     of  ok ->
             State
     ;   {error, _}=Error ->
-            ?log_error("gen_tcp:send(~p, ~p) -> ~p", [Sock, Payload, Error]),
+            ?log_error("gen_tcp:send(~p, Payload) -> ~p", [Sock, Error]),
             % TODO: Maybe schedule retry?
             ok = gen_tcp:close(Sock),
             State#state{sock=none}
