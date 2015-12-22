@@ -111,7 +111,7 @@ try_to_send(
             State
     ;   {error, _}=Error ->
             ?log_error(
-                "gen_udp:send(~p, ~p, ~p, ~p) -> ~p",
+                "gen_udp:send(~p, ~p, ~p, Payload) -> ~p",
                 [Sock, DstHost, DstPort, Error]
             ),
             % TODO: Do something with unsent messages?
