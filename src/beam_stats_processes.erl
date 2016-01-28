@@ -67,7 +67,8 @@ print(
 ) ->
     PerProcessStatsSorted = lists:sort(
         fun (#beam_stats_process{memory=A}, #beam_stats_process{memory=B}) ->
-            % From lowest to highest:
+            % From lowest to highest, so that the largest appears the end of
+            % the output and be easier to see (without scrolling back):
             A < B
         end,
         PerProcessStats
