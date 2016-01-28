@@ -32,9 +32,9 @@
 -type state() ::
     #state{}.
 
--define(DEFAULT_HOST        , "localhost").
--define(DEFAULT_PORT        , 2003).
--define(DEFAULT_TIMEOUT     , 5000).
+-define(DEFAULT_HOST    , "localhost").
+-define(DEFAULT_PORT    , 2003).
+-define(DEFAULT_TIMEOUT , 5000).
 
 -spec init([option()]) ->
     {non_neg_integer(), state()}.

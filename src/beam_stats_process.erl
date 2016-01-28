@@ -79,9 +79,9 @@ print(
     { pid               = Pid
     , registered_name   = RegisteredNameOpt
     , ancestry          = #beam_stats_process_ancestry
-        { raw_initial_call  = InitialCallRaw
-        , otp_initial_call  = InitialCallOTPOpt
-        , otp_ancestors     = AncestorsOpt
+        { raw_initial_call = InitialCallRaw
+        , otp_initial_call = InitialCallOTPOpt
+        , otp_ancestors    = AncestorsOpt
         }
     , status            = Status
     , memory            = Memory

@@ -30,8 +30,8 @@
 -define(PRODUCE_ASYNC , produce_async).
 
 -record(state,
-    { consumers = ordsets:new() :: ordsets:ordset(pid())
-    , deltas_server :: beam_stats_delta:t()
+    { consumers     = ordsets:new() :: ordsets:ordset(pid())
+    , deltas_server                 :: beam_stats_delta:t()
     }).
 
 -type state() ::
@@ -113,7 +113,7 @@ produce_async(#state{}=State) ->
     state().
 produce(
     #state
-    { consumers   = ConsumersSet
+    { consumers     = ConsumersSet
     , deltas_server = DeltasServer
     }=State,
     MsgSendFun

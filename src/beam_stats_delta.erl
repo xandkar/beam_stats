@@ -32,7 +32,8 @@ start() ->
         , public
         ],
     ?T
-    { erlang_statistics = ets:new(beam_stats_delta_erlang_statistics, Options)
+    { erlang_statistics =
+        ets:new(beam_stats_delta_erlang_statistics, Options)
     , erlang_process_info_reductions =
         ets:new(beam_stats_delta_erlang_process_info_reductions, Options)
     }.
@@ -40,7 +41,7 @@ start() ->
 -spec stop(t()) ->
     {}.
 stop(?T
-    { erlang_statistics = TidErlangStatistics
+    { erlang_statistics              = TidErlangStatistics
     , erlang_process_info_reductions = TidErlangProcessInfoReductions
     }
 ) ->
