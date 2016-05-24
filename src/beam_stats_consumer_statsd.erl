@@ -79,8 +79,7 @@ consume(
 -spec terminate(state()) ->
     {}.
 terminate(#state{sock=SockOpt}) ->
-    ok = hope_option:iter(SockOpt, fun gen_udp:close/1),
-    {}.
+    hope_option:iter(SockOpt, fun gen_udp:close/1).
 
 %% ============================================================================
 %% Transport

@@ -59,8 +59,7 @@ consume(Q, #state{}=State1) ->
 -spec terminate(state()) ->
     {}.
 terminate(#state{sock=SockOpt}) ->
-    ok = hope_option:iter(SockOpt, fun gen_tcp:close/1),
-    {}.
+    hope_option:iter(SockOpt, fun gen_tcp:close/1).
 
 %% ============================================================================
 

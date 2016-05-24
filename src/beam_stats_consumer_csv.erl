@@ -49,8 +49,7 @@ consume(Q, #state{}=State1) ->
 -spec terminate(state()) ->
     {}.
 terminate(#state{file=FileOpt}) ->
-    ok = hope_option:iter(FileOpt, fun file:close/1),
-    {}.
+    hope_option:iter(FileOpt, fun file:close/1).
 
 %% ============================================================================
 
