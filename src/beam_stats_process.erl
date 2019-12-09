@@ -150,7 +150,7 @@ pid_info_opt(Pid, Key) ->
 %% ============================================================================
 %% Process code origin approximation or naming the anonymous processes.
 %%
-%% At runtime, given a PID, how precicely can we identify the origin of the
+%% At runtime, given a PID, how precisely can we identify the origin of the
 %% code it is running?
 %%
 %% We have these data points:
