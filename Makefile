@@ -10,7 +10,7 @@ REBAR := ./rebar
 	deps_get \
 	deps_update \
 	dialyze \
-	dialyzer_blt_build \
+	dialyzer_plt_build \
 	test \
 	travis_ci
 
@@ -53,7 +53,7 @@ dialyze:
 	)
 
 
-dialyzer_blt_build:
+dialyzer_plt_build:
 	@dialyzer \
 		--build_plt \
 		--apps $(shell ls $(shell \
