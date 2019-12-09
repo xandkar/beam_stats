@@ -21,6 +21,20 @@ Essentially like `folsomite`, but different. Different in the following ways:
     + Well-defined metrics-to-binary conversions, as opposed to the
       nearly-arbitrary term-to-string conversions used in `folsomite`
     + Spec'd, tested and Dialyzed
+- More detailed stats:
+    - **per-process**. As much process ancestry is collected as possible, then
+      anonymous processes are aggregated to their youngest-known, named
+      predecessor - this aggregation keeps the useful breadcrumbs, while
+      reducing the number of unique names from exploding, which
+      **avoids the associated problems**:
+        1. not very useful when there're lots of short-lived processes
+        2. exploading disk space usage in Whisper
+    - per-ETS-table
+
+For an example of using pre-process stats to track-down memory leaks, here's a
+screenshot of the SSL connection process memory usage growth drop after upgrade
+from 17.5 to 18.1 (back in 2015):
+![SSL memory leak going away](screenshot--2015-10-05--18.41.30.jpg)
 
 ### Adding consumers
 
