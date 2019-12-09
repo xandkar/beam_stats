@@ -30,7 +30,7 @@ Essentially like `folsomite`, but different. Different in the following ways:
         1. not very useful when there're lots of short-lived processes
         2. exploading disk space usage in Whisper
     - per-ETS-table
-    - and more ... see records defined in [include](tree/master/include)
+    - and more ... see records defined in `include` directory
 
 For an example of using pre-process stats to track-down memory leaks, here's a
 screenshot of the SSL connection process memory usage growth drop after upgrade
