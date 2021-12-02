@@ -69,6 +69,8 @@ try_to_send(#state{sock=none}=State, _) ->
     ?log_error("Sending failed. No socket in state."),
     % TODO: Maybe schedule retry?
     State;
+
+try_to_send(State, []) -> State;
 try_to_send(#state{sock={some, Sock}}=State, Payload) ->
     case gen_tcp:send(Sock, Payload)
     of  ok ->
@@ -79,6 +81,7 @@ try_to_send(#state{sock={some, Sock}}=State, Payload) ->
             ok = gen_tcp:close(Sock),
             State#state{sock=none}
     end.
+
 
 -spec try_to_connect_if_no_socket(state()) ->
     state().

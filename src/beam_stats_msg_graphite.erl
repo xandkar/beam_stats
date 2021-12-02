@@ -78,7 +78,7 @@ to_iolist(
     ValueBin = integer_to_binary(Value),
     TimestampInt = timestamp_to_integer(Timestamp),
     TimestampBin = integer_to_binary(TimestampInt),
-    [PathIOList, <<" ">>, ValueBin, <<" ">>, TimestampBin].
+    [PathIOList, <<" ">>, ValueBin, <<" ">>, TimestampBin, <<"\n">>].
 
 -spec path_to_iolist([binary()]) ->
     iolist().
