@@ -23,14 +23,23 @@
     #?MODULE{}.
 
 -spec of_id(id()) ->
-    t().
+    hope_opt:t(t()).
 of_id(ID) ->
-    WordSize      = beam_stats_source:erlang_system_info(wordsize),
+    Name          = beam_stats_source:ets_info(ID, name),
+    Size          = beam_stats_source:ets_info(ID, size),
     NumberOfWords = beam_stats_source:ets_info(ID, memory),
-    NumberOfBytes = NumberOfWords * WordSize,
-    #?MODULE
-    { id     = ID
-    , name   = beam_stats_source:ets_info(ID, name)
-    , size   = beam_stats_source:ets_info(ID, size)
-    , memory = NumberOfBytes
-    }.
+    case lists:member(undefined, [Name, Size, NumberOfWords]) of
+        true -> % Table went away.
+            none;
+        false ->
+            WordSize      = beam_stats_source:erlang_system_info(wordsize),
+            NumberOfBytes = NumberOfWords * WordSize,
+            T =
+                #?MODULE
+                { id     = ID
+                , name   = Name
+                , size   = Size
+                , memory = NumberOfBytes
+                },
+            {some, T}
+    end.

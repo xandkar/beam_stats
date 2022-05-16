@@ -15,4 +15,4 @@
     t().
 collect() ->
     TableIDs = beam_stats_source:ets_all(),
-    lists:map(fun beam_stats_ets_table:of_id/1, TableIDs).
+    [Tbl || {some, Tbl} <- [beam_stats_ets_table:of_id(I) || I <- TableIDs]].
